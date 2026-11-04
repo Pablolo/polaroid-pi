@@ -1,0 +1,467 @@
+@day 21/10 | Dia 1 | Test webcam i primera prova Bluetooth | Webcam i Bluetooth
+<p>La primera càmera que puc provar és una webcam Creative Live! Cam 4K que es connecta mitjançant USB directament a la Raspberry.</p>
+@photos
+@fig wide | 10-21-01 | Webcam Creative connectada a la Raspberry Pi | La webcam Creative Live! Cam 4K
+@end
+<ul><li>Iniciem la Raspberry i posem el comandament <code>lsusb</code> per veure els dispositius.</li></ul>
+@photos
+@fig wide fit | 10-21-02 | Sortida de la comanda lsusb al terminal | lsusb
+@end
+<ul><li>Per testejar la càmera, instal·lem l'eina <i>fswebcam</i> a la terminal: <code>sudo apt update &amp;&amp; sudo apt install fswebcam</code> i després posem <code>fswebcam -r 1920x1080 --no-banner foto_limpia.jpg</code> on afegim la resolució, l'opció de que no aparegui la data a la foto i el nom de l'arxiu. Després tindrem que mirar si aquesta resolució és la ideal per la impressora (que encara no tenim) o s'ha de canviar.</li></ul>
+<p>Anava després a provar el bluetooth de la Raspberry perquè trobés els dispositius a prop (per quan tinguem l'impressora) però el comandament <code>scan on</code> de <code>bluetoothctl</code> a la terminal dona error.</p>
+@photos
+@fig fit | 10-21-03 | Passos per reinstal·lar i reiniciar el Bluetooth | Passos per arreglar el Bluetooth
+@end
+<p>Però segueix sense funcionar, així que ho deixem per demà.</p>
+
+@day 22/10 | Dia 2 | Prova impressora tèrmica amb BLE | Impressora BLE
+<p>Avui rebem la impressora portàtil (<a href="https://www.amazon.es/dp/B0BW4PS6RY" target="_blank" rel="noopener">NK-FA3300</a>, tecnologia d'impressió tèrmica, connectivitat per Bluetooth i paper size 57×26 mm).</p>
+@photos
+@fig wide | 10-22-01 | La impressora tèrmica al costat de la Raspberry | Arriba la impressora
+@end
+<p>Fem una primera prova, connectant l'impressora des del mòbil i fent una foto a la Raspberry:</p>
+@photos
+@fig | 10-22-02 | Primera foto impresa des del mòbil | Primera prova des del mòbil
+@end
+<p>Ara continuem amb la configuració del bluetooth, que ahir no funcionava:</p>
+<pre><code><b>pi@raspberrypi:~ $ hciconfig -a</b>
+hci0:   Type: Primary  Bus: UART
+        BD Address: B8:27:EB:19:B4:7B  ACL MTU: 1021:8  SCO MTU: 64:1
+        DOWN
+        RX bytes:2149 acl:0 sco:0 events:169 errors:0
+        TX bytes:30660 acl:0 sco:0 commands:169 errors:0
+        Features: 0xbf 0xfe 0xcf 0xfe 0xdb 0xff 0x7b 0x87
+        Packet type: DM1 DM3 DM5 DH1 DH3 DH5 HV1 HV2 HV3
+        Link policy: RSWITCH SNIFF
+        Link mode: PERIPHERAL ACCEPT
+
+<b>pi@raspberrypi:~ $ systemctl status hciuart</b>
+hciuart.service - Configure Bluetooth Modems connected by UART
+     Loaded: loaded (/usr/lib/systemd/system/hciuart.service; enabled; preset: &gt;
+     Active: inactive (dead)</code></pre>
+<p>Aquests 2 comandaments ens diuen que no s'ha inicialitzat el firmware (DOWN i (dead)), així que obrim l'arxiu de configuració:</p>
+<pre><code>sudo nano /boot/firmware/config.txt</code></pre>
+<p>I afegim aquestes dues línies al final:</p>
+<pre><code>dtparam=krnbt=on
+dtparam=bluetooth=on</code></pre>
+<p>Guardem i continua sense funcionar, donant aquest error:</p>
+<pre><code>Can't init device hci0: Operation not possible due to RF-kill (132)</code></pre>
+<p>Significa que el Bluetooth està bloquejat per software a nivell de seguretat del SO, així que fem això:</p>
+<pre><code>sudo rfkill unblock bluetooth</code></pre>
+<p>I aixequem de nou:</p>
+<pre><code>sudo hciconfig hci0 up</code></pre>
+<p>I ara sí, per fi funciona:</p>
+<pre><code><b>pi@raspberrypi:~ $ hciconfig -a</b>
+hci0:   Type: Primary  Bus: UART
+        BD Address: B8:27:EB:19:B4:7B  ACL MTU: 1021:8  SCO MTU: 64:1
+        UP RUNNING
+        RX bytes:2855 acl:0 sco:0 events:209 errors:0
+        TX bytes:31361 acl:0 sco:0 commands:209 errors:0
+        Features: 0xbf 0xfe 0xcf 0xfe 0xdb 0xff 0x7b 0x87
+        Packet type: DM1 DM3 DM5 DH1 DH3 DH5 HV1 HV2 HV3
+        Link policy: RSWITCH SNIFF
+        Link mode: PERIPHERAL ACCEPT
+        Name: 'raspberrypi'
+        Class: 0x400000
+        Service Classes: Telephony
+        Device Class: Miscellaneous,
+        HCI Version: 4.1 (0x7)  Revision: 0x1fc
+        LMP Version: 4.1 (0x7)  Subversion: 0x2209
+        Manufacturer: Broadcom Corporation (15)</code></pre>
+<p>Ara hem de conseguir que la impressora es connecti amb la Raspberry. Per això fem una búsqueda de dispositius des de la terminal, a veure si trobem la direcció MAC de la impressora:</p>
+<pre><code><b>pi@raspberrypi:~ $ sudo bluetoothctl</b>
+[sudo] password for pi:
+hci0 new_settings: powered bondable ssp br/edr le secure-conn
+Agent registered
+[CHG] Controller B8:27:EB:19:B4:7B Pairable: yes
+
+<b>[bluetoothctl]&gt; scan on</b>
+SetDiscoveryFilter success
+hci0 type 7 discovering on
+Discovery started
+[CHG] Controller B8:27:EB:19:B4:7B Discovering: yes
+[NEW] Device 46:D8:CE:9C:E9:32 46-D8-CE-9C-E9-32
+[NEW] Device 70:EA:74:D6:2C:F5 70-EA-74-D6-2C-F5
+[NEW] Device C0:91:A1:F1:81:51 C0-91-A1-F1-81-51
+[NEW] Device C4:4F:9F:E9:FE:EF X5
+[NEW] Device 5B:6D:AC:2F:A6:83 5B-6D-AC-2F-A6-83
+[NEW] Device 69:41:AB:F6:78:F8 69-41-AB-F6-78-F8
+[NEW] Device 40:17:01:A9:F5:94 40-17-01-A9-F5-94</code></pre>
+<p>Entre altres, ens surt aquest anomenat X5 i com més endavant al resultat de la terminal ens deia que la seva senyal estava entre <b>-40 dBm i -55 dBm</b> significa que la senyal és excel·lent i molt forta (perquè estan un al costat de l'altre):</p>
+<pre><code>[CHG] Device C4:4F:9F:E9:FE:EF RSSI: 0xffffffd8 <b>(-40)</b>
+...
+[CHG] Device C4:4F:9F:E9:FE:EF RSSI: 0xffffffc9 <b>(-55)</b></code></pre>
+<p>Ho confirmo mirant des del mòbil, surt X5-4FC4. Així que sabem que la seva direcció MAC és: <code>C4:4F:9F:E9:FE:EF</code></p>
+<p>Activem la terminal <code>bluetoothctl</code> una altra vegada i mentre fem el <code>scan on</code>, escrivim:</p>
+<pre><code>[bluetoothctl]&gt; pair C4:4F:9F:E9:FE:EF
+[bluetoothctl]&gt; trust C4:4F:9F:E9:FE:EF</code></pre>
+<p>Però res funciona... intento desinstal·lar l'app del mòbil perquè la impressora l'oblidi, en cas de que només pugui connectar-se a un dispositiu, però encara res. Llavors caic en que l'app m'ha demanat permisos d'ubicació (a més del bluetooth), la qual cosa em sembla estranya.</p>
+<p>Investigant, aprenc que la impressora NK és un dispositiu purament <b>Bluetooth Low Energy (BLE).</b> Els dispositius BLE no es poden aparellar de la manera tradicional (pair) perquè no usen els perfils estàndard d'àudio o teclat. En canvi, transmeten dades directament a través de "característiques" mitjançant ordres GATT. Per això el Bluetooth clàssic de la Raspberry Pi et diu que no està disponible per a aparellament.</p>
+<p>Per verificar, utilitzem l'eina d'escaneig específica per dispositius Low Energy:</p>
+<pre><code><b>pi@raspberrypi:~ $ sudo hcitool lescan</b>
+LE Scan ...
+77:34:20:58:CF:C6 (unknown)
+8C:7A:3D:0E:C4:BD (unknown)
+8C:7A:3D:0E:C4:BD (unknown)
+C4:4F:9F:E9:FE:EF (unknown)
+C4:4F:9F:E9:FE:EF X5
+66:4E:B9:9C:9F:94 (unknown)
+66:4E:B9:9C:9F:94 (unknown)</code></pre>
+<p>I, efectivament, trobem el dispositiu X5 allà.</p>
+
+@day 23/10 | Dia 3 | Connexió impressora | Primera impressió
+<p>Avui hem rebut una nova càmera, la <b>Raspberry PI Camera</b>, però abans de configurar-la, continuem on ho vam deixar ahir, amb el tema del Bluetooth Low Energy.</p>
+@photos
+@fig wide | 10-23-01 | Mòdul Raspberry Pi Camera amb la cinta | La nova Raspberry Pi Camera
+@end
+<p>Aquestes mini impressores tèrmiques <b>BLE</b> no accepten text pla directament perquè la informació viatja empaquetada en ordres específiques de gràfics. Per poder comunicar-nos, utilitzarem un script de Python que cerca la característica d'escriptura de la impressora.</p>
+<p>Farem un test per imprimir alguna cosa des de la Raspberry. Així que primer instal·lem la llibreria:</p>
+<pre><code>pip install bleak --break-system-packages</code></pre>
+<p>I farem córrer un script de python anomenat {{test_impresora_v1.py}} que busca de manera asíncrona els <i>Universally Unique Identifier</i> (UUID) de la impressora, és a dir, les direccions internes dels serveis que permet el dispositiu. I ens dona aquest resultat:</p>
+<pre><code><b>pi@raspberrypi:~ $ python test_impresora.py</b>
+Buscando y conectando a la impresora C4:4F:9F:E9:FE:EF...
+¡Conexión BLE establecida con éxito!
+
+--- Explorando Servicios y Características del dispositivo ---
+Característica encontrada: 0000ae3c-0000-1000-8000-00805f9b34fb | Propiedades: ['notify']
+Característica encontrada: 0000ae3b-0000-1000-8000-00805f9b34fb | Propiedades: ['write-without-response']
+Característica encontrada: 0000ae10-0000-1000-8000-00805f9b34fb | Propiedades: ['read', 'write']
+Característica encontrada: 0000ae04-0000-1000-8000-00805f9b34fb | Propiedades: ['notify']
+Característica encontrada: 0000ae01-0000-1000-8000-00805f9b34fb | Propiedades: ['write-without-response']
+Característica encontrada: 0000ae03-0000-1000-8000-00805f9b34fb | Propiedades: ['write-without-response']
+Característica encontrada: 0000ae05-0000-1000-8000-00805f9b34fb | Propiedades: ['indicate']
+Característica encontrada: 0000ae02-0000-1000-8000-00805f9b34fb | Propiedades: ['notify']
+Característica encontrada: 00002a00-0000-1000-8000-00805f9b34fb | Propiedades: ['read', 'write']
+
+Canal seleccionado para envío de datos: 0000ae3b-0000-1000-8000-00805f9b34fb
+Enviando texto de prueba...
+¡Datos enviados! Revisa si la impresora reaccionó.</code></pre>
+<p class="aside">*En el protocol de fabricació d'aquestes mini-impressores xineses, el canal ae01 és la "bústia de dades" del capçal tèrmic, mentre que els canals ae3b o ae03 se solen utilitzar per a configuracions de fàbrica, actualitzar el firmware o comprovar l'estat de la bateria.</p>
+<p>Per tant ara podem modificar l'script amb la nova informació trobada ({{test_impresora_v2.py}}) però tampoc funciona. El que fem llavors és un debug amb l'ajuda de la IA que ens porta a:</p>
+<blockquote>
+<p>Aquí tienes el resumen de los pasos que hemos dado hasta ahora para descifrar tu impresora NK-FA3300:</p>
+<p><b>Paso 1:</b> El error de entorno: Comenzamos solucionando un bloqueo de seguridad en tu Raspberry Pi OS que te impedía instalar la librería Bluetooth bleak. Lo resolvimos aprendiendo a usar entornos virtuales de Python.</p>
+<p><b>Paso 2:</b> Localización del Hardware: Creamos un script para escanear tu impresora. Descubrimos su dirección MAC física (C4:4F:9F:E9:FE:EF) y mapeamos sus "oficinas" internas de comunicación (los canales o UUIDs de lectura y escritura).</p>
+<p><b>Paso 3:</b> La batalla de los protocolos: Intentamos comunicarnos con la impresora enviando texto plano y comandos estándar (ESC/POS). Como no reaccionaba, fuimos probando de forma avanzada diferentes estructuras binarias de fabricantes de AliExpress (protocolos de inicio 51 78 e iPrint, cálculos matemáticos de Checksum CRC8 y configuraciones de energía). La impresora enviaba los datos con éxito pero seguía muda.</p>
+<p><b>Paso 4:</b> El diagnóstico definitivo (Ingeniería Inversa): Nos diste el enlace de Amazon y la App oficial que usa (Tiny Print). Activaste el registro de desarrollo de Bluetooth en tu Galaxy A54 y capturaste el tráfico real de datos en el archivo btsnoop_hci.log.</p>
+<p><b>El descubrimiento:</b> Al leer tu archivo de captura, descubrimos el secreto: la impresora tiene un chip gráfico nativo de Gprinter. No entiende texto; solo entiende imágenes. El teléfono transforma cualquier letra en un mapa de bits (píxeles blancos y negros) y se los envía en ráfagas empaquetadas muy específicas.</p>
+<p>Gracias a ese archivo que extrajiste, dejamos de adivinar y pudimos escribir el último código, el cual emula milimétricamente el comportamiento de la aplicación de tu móvil.</p>
+</blockquote>
+<p>Ara pel proper pas necessitem instal·lar la llibreria de processament d'imatges de Python, Pillow.</p>
+<pre><code>pip install pillow --break-system-packages</code></pre>
+<p>I un parell de llibreries:</p>
+<pre><code>sudo apt update &amp;&amp; sudo apt install libopenjp2-7 libtiff6 -y</code></pre>
+<p>I encara segueix sense funcionar, així que continuem fent enginyeria inversa amb el log que hem tret del mòbil <b>btsnoop_hci.log</b>, escrivint un script de Python per treure el paquet binari exacte i complet que l'app Tiny Print injecta al principi de la comunicació (ho podem veure a {{extraer_exacto.py}}) i ens surt això:</p>
+<pre><code><b>pi@raspberrypi:~ $ python extraer_exacto.py</b>
+Analizando btsnoop_hci.log en modo profundo... ¡¡PAQUETE DE CONTROL DETECTADO!! Tamaño del paquete: 123 bytes Primeros bytes (Hex): 5206005178A40001003399FF5178AF0002004C1DF4FF5178BE0001000309FF51
+
+Mensaje completo (Hex): 5206005178A40001003399FF5178AF0002004C1DF4FF5178BE0001000309FF5178BD0001001E5AFF5178A2003000005055555555555555555555555555555555555555555555555555555555555555555555555555555555555555550D00B0FF5178BF0005000CFFFFEA0C89FF5178BF0005000CFFFFEA0C89FF51</code></pre>
+<p>En desglossar el codi binari real, veiem la seqüència exacta de desbloqueig que exigeix la placa base:</p>
+<ol>
+<li><code>5178A4...</code> → Configura el capçal tèrmic.</li>
+<li><code>5178AF...</code> → Encén el mòdul d'energia del motor.</li>
+<li><code>5178BE...</code> → Desbloqueja la memòria intermèdia del microcontrolador.</li>
+<li><code>5178BD...</code> → Configura el gruix de línia.</li>
+<li><code>5178A2...</code> → L'ordre màgica d'impressió acompanyada d'un flux de píxels reals (50555555...).</li>
+</ol>
+<p>I ara, modificant l'script {{rodillo.py}} per fi aconseguim que la impressora es mogui una mica. Després de moltes proves amb diferents codis i sense èxit, fins que arriba el Joan i acabem fent això:</p>
+<pre><code>  275  bluetoothctl list
+  276  bluetoothctl
+  277  sudo apt install python3-bleak
+  278  nano [[prova_ble.py]]
+  279  python3 <b>[[prova_ble.py]]</b>
+  280  nano [[prova_ble_lectura_test_1.py]]
+  281  python <b>[[prova_ble_lectura_test_1.py]]</b>
+  282  bluetoothctl info C4:4F:9F:E9:FE:EF
+  283  bluetoothctl
+  284  sudo apt install python3-pil
+  285  nano [[hola_print_test.py]]
+  286  python3 <b>[[hola_print_test.py]]</b>
+  287  history</code></pre>
+<p>Codis: {{prova_ble.py}}, {{prova_ble_lectura_test_1.py}}, {{hola_print_test.py}}</p>
+<p>I per fi veiem que imprimeix:</p>
+@photos
+@fig wide | 10-23-02 | Tira de paper amb el text HOLA RASPBERRY | HOLA RASPBERRY!
+@end
+
+@day 26/10 | Dia 4 | Instal·lació càmera Pi | Pi Camera
+<p>Avui el principal objectiu és entendre per què va funcionar l'altre dia la impressió de les paraules. Aquests són els passos que vam fer, des de l'inici:</p>
+<ol>
+<li><code>bluetoothctl list</code>: Verifica quins adaptadors o controladors Bluetooth físics té disponibles la Raspberry Pi.</li>
+<li><code>bluetoothctl</code>: Obre la consola interactiva integrada del sistema per cercar, aparellar i connectar dispositius Bluetooth.</li>
+<li><code>sudo apt install python3-bleak</code>: Instal·la Bleak, la llibreria de Python encarregada de gestionar les connexions Bluetooth Low Energy (BLE) de forma asíncrona.</li>
+<li><code>python3 [[prova_ble.py]]</code>: Vam crear i provar un script inicial per escanejar i llistar els serveis i les característiques internes de la impressora (el codi del fitxer {{prova_ble.py}}). Amb això vam descobrir que la característica anomenada 0000ae01-... serveix per enviar-li dades.</li>
+<li><code>python [[prova_ble_lectura_test_1.py]]</code>: Vam dissenyar un script per llegir dades internes de la impressora (el fitxer {{prova_ble_lectura_test_1.py}}).</li>
+<li><code>bluetoothctl info C4:4F:9F:E9:FE:EF</code>: Consulta l'estat actual de la impressora al sistema (si està aparellada, connectada o és de confiança).</li>
+<li><code>python3 [[prova_estat_impresora.py]]</code>: Quan executem aquest script d'estat ({{prova_estat_impresora.py}}), la impressora torna una cadena de bytes: <code>51 78 a3 01 03 00 00 11 29 9d ff</code>. Si desglossem aquesta resposta segons el protocol, el byte 00 (o els bits interns) indiquen que la impressora reporta un estat correcte (té bateria, té paper i no està sobreescalfada). Això vol dir que la comunicació bidireccional funciona a la perfecció.</li>
+<li><code>sudo apt install python3-pil</code>: Instal·la Pillow (PIL), la llibreria de processament d'imatges de Python. És crucial perquè aquestes impressores no entenen text pla; entenen imatges formades per punts (píxels).</li>
+<li><code>python3 [[hola_print_test.py]]</code>: El gran final. Vam crear l'script ({{hola_print_test.py}}) que va processar el missatge i va disparar mecànicament la impressió de "HOLA RASPBERRY".</li>
+</ol>
+<p>I ara, com volem imprimir una foto de prova (encara no presa des de la càmera de la Raspberry, sinó una que tenim a l'ordinador) modifiquem el codi {{print_jpg.py}} i veiem que tot surt bé:</p>
+@photos
+@fig | 10-26-01 | Foto impresa en paper tèrmic sortint de la impressora | Foto de prova impresa
+@end
+<p>Així que el proper pas és connectar i instal·lar la Pi Camera. Apaguem la Raspberry i la connectem físicament:</p>
+@photos
+@fig wide | 10-26-02 | Raspberry Pi amb la càmera connectada | Pi Camera connectada
+@end
+<p>Després instal·lem la llibreria necessària:</p>
+<pre><code>sudo apt install libcamera-apps -y</code></pre>
+<p>I provem de fer una foto amb el codi {{tomar_foto.py}}:</p>
+<pre><code>import subprocess
+import time
+
+print("Inicializando la Raspberry Pi Camera v1.3 (Entorno Bookworm)...")
+time.sleep(2)
+
+nombre_archivo = "mi_experimento.jpg"
+print(f"Tomando foto con rpicam-still y guardándola como '{nombre_archivo}'...")
+
+try:
+    # USAMOS EL NUEVO COMANDO OFICIAL: rpicam-still
+    # --immediate toma la foto al instante sin esperar previsualizaciones
+    subprocess.run(["rpicam-still", "-o", nombre_archivo, "--immediate"], check=True)
+    print("¡Listo! Foto guardada con éxito en esta carpeta.")
+except subprocess.CalledProcessError as e:
+    print(f"Error al intentar tomar la foto: {e}")
+except FileNotFoundError:
+    print("Error: No se encontró el comando 'rpicam-still'.")</code></pre>
+<p>Que acaba sortint de forma correcta, donant un .jpg amb resolució 2592 x 1944 píxels.</p>
+<p>I ara sí, connectem la Raspberry Pi Camera amb un nou codi de Python ({{camara_instantanea.py}}) perquè imprimeixi la foto presa al moment, i per fi els dos estan connectats:</p>
+@photos
+@fig wide | 10-26-03 | Foto feta amb la Pi Camera i impresa | Càmera i impressora connectades
+@end
+<p>Ara faltaria:</p>
+<ul>
+<li>Intentar imprimir en una resolució millor.</li>
+<li>Enviar la foto per Telegram a la vegada al meu mòbil.</li>
+<li>Connectar els botons d'encesa i de prendre foto.</li>
+<li>Afegir 3 leds d'estat.</li>
+<li>Connectar tot a la bateria externa.</li>
+</ul>
+<p>He fet una prova per connectar la Raspberry directament a la Powerbank (microUSB a USB) i no s'encén correctament. Investigant, veig que necessitaríem provar de USB-C a microUSB, perquè aquest té una gestió d'energia molt més estable i entrega els 3 Amperes, així que n'hem comprat un per Amazon.</p>
+@photos
+@fig | 10-26-04 | Cable USB-C a microUSB | El cable USB-C a microUSB
+@end
+
+@day 27/10 | Dia 5 | Telegram i botons d'encesa i prendre foto | Telegram i botons
+<p>Per millorar la resolució de la imatge, imprimir en forma vertical (perquè la imatge sigui més gran i nítida) i guardar les fotos en una carpeta i noms d'arxiu amb datetime, hem canviat el codi a {{camara_instantanea_final.py}}</p>
+@photos
+@fig fit | 10-27-01 | Esquema dels passos del programa | Els passos del programa
+@end
+<h4>Connexió i enviament de foto a Telegram</h4>
+<p>Ara passem a la configuració de Telegram per poder enviar la foto al mòbil en color a la vegada que s'imprimeix en blanc i negre. Obrim <b>BotFather</b> i creem un nou bot:</p>
+@photos
+@fig | 10-27-02 | Conversa amb BotFather creant el bot Polaroid Pi | Creant el bot amb BotFather
+@end
+<p>BotFather ens dona un token (no el publiquem aquí perquè és la clau secreta del bot) i després busquem el bot @userinfobot per treure el nostre ID, i modifiquem el codi de manera que queda {{camara_instantanea_telegram.py}}. Provem a fer una foto i funciona:</p>
+@photos
+@fig | 10-27-03 | Foto rebuda a Telegram amb la data | La foto arriba al mòbil
+@end
+<p>Una vegada solucionat això, passem a connectar els botons d'encesa de la raspberry i de prendre la foto. Comencem en aquest últim, ja que és el que té menys perill (l'altre si malfunciona pot apagar la Raspberry quan no toqui).</p>
+<h4>Botó de prendre foto</h4>
+<p>Per això agafem un botó i connectem un dels seus pins amb un cable F2F a <b>GPIO17</b> i l'altre a <b>GND</b>:</p>
+@photos
+@fig wide | 10-27-04 | Botó connectat amb cables a la Raspberry | Botó a GPIO17
+@fig wide | 10-27-05 | Detall de la connexió del botó | Detall de la connexió
+@end
+<p>Fem un testeig del botó a nivell de software amb el codi {{test_boto.py}} i segons l'avís que ens mostra a la terminal funciona bé, així que modifiquem el nostre codi per afegir-lo (i de pas afegir un bucle infinit per poder prendre totes les fotos seguides que vulguem sense que el programa es pari) queda com a {{camara_instantanea_telegram_boton.py}}</p>
+<h4>Botó d'encesa i apagada</h4>
+<p>Una vegada llest, anem amb l'altre botó: el d'encesa i apagada de la Raspberry. Connectem un dels cables a <b>GPIO3</b> i l'altre a <b>GND</b>:</p>
+@photos
+@fig wide | 10-27-06 | Segon botó connectat a la Raspberry | Botó a GPIO3
+@end
+<p>El que farem per afegir una capa de seguretat és que el botó d'encesa i apagada s'hagi d'apretar durant uns 3-4 segons per ser efectiu.</p>
+<p>Anem a indicar-li al nucli de la Raspberry que pari atenció al pin GPIO 3 per a les tasques d'energia amb el codi {{camera_boto_apagat.py}}</p>
+@photos
+@fig wide fit | 10-27-07 | Terminal mostrant que s'ha detectat el botó d'apagada | Apagada detectada
+@end
+<p>Veiem que funciona correctament i, quan després apretem el botó una altra vegada, la Raspberry s'encén. Així que tot funciona bé (sempre i quan el nostre codi estigui corrent).</p>
+
+@day 28/10 | Dia 6 | Soldadura de cables | Soldadura
+<p>Avui ha arribat el cable microUSB a USB-C i comprovem que, efectivament, aquest sí que serveix perquè la Raspberry tingui la suficient energia com per engegar-se i mantenir-se sense cap problema:</p>
+@photos
+@fig wide | 10-28-01 | Raspberry alimentada amb la bateria externa | Funcionant amb bateria
+@end
+<p>Ara llavors ja no depenem d'una font d'energia connectada a la xarxa i el nostre prototip és "portàtil". L'únic que no estic segur és si el cable és massa curt (15 cm) però de moment ens arreglarem amb aquest.</p>
+<p>Després hem passat tot el matí soldant els botons als cables i a la placa. Mai havia soldat abans, així que he fet i desfet fins que ha sortit alguna cosa funcional:</p>
+@photos
+@fig wide | 10-28-02 | Soldant a la taula de treball | Soldant
+@fig wide | 10-28-03 | Placa amb els botons soldats | Botons a la placa
+@end
+<p>Aquest ha sigut el resultat:</p>
+@photos
+@fig wide | 10-28-04 | Resultat final de la soldadura connectat a la Raspberry | El resultat
+@end
+
+@day 29/10 | Dia 7 | Auto-inici i carcassa de porexpan | Auto-inici i porexpan
+<p>Avui comencem el dia configurant l'auto-login per no haver de posar el password en encendre o apagar la Raspberry, ja que quan la càmera estigui llesta no tindrem una pantalla per posar-la.</p>
+<p>Executem <code>sudo raspi-config</code> i escollim l'opció S6 per l'auto-login:</p>
+@photos
+@fig wide fit | 10-29-01 | Menú de raspi-config | raspi-config
+@end
+<p>I per tancar sense contrasenya executem <code>sudo visudo -f /etc/sudoers.d/shutdown-nopasswd</code> i afegim aquesta línia:</p>
+<pre><code>%sudo ALL=(root) NOPASSWD: /usr/sbin/shutdown, /usr/sbin/reboot, /usr/sbin/poweroff</code></pre>
+<p>I guardem.</p>
+<p>Ara anem a configurar la Raspberry perquè faci córrer el codi (de moment l'última versió anomenada {{polaroid_pi_v1.py}}) quan s'encén de manera automàtica amb SystemD.</p>
+<p>Per això fem <code>sudo nano /etc/systemd/system/polaroid.service</code> i escrivim això a l'arxiu:</p>
+<pre><code>[Unit]
+Description=Servicio de Camara Instantanea Polaroid
+After=multi-user.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi
+ExecStart=/usr/bin/python3 /home/pi/[[polaroid_pi_v1.py]]
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+<p>Després activem i registrem el nou servei que hem creat:</p>
+<pre><code>sudo systemctl daemon-reload
+sudo systemctl enable polaroid.service</code></pre>
+<p>I provem, tot funciona correctament. En apretar el botó d'encesa durant 3 segons s'apaga la càmera i si després l'apretem una vegada s'encén i automàticament al cap de 30 segons (quan s'ha carregat el sistema operatiu) ja es poden prendre fotografies.</p>
+<h4>Crear el prototip de carcassa amb porexpan</h4>
+<p>Ara que ja tenim tot el material bàsic (menys el led RGB d'estat) vull fer un prototip de carcassa amb porexpan per verificar que tot funciona bé i que les connexions són les adequades.</p>
+<p>Primer tallem un tros que anirà a baix de tot, on posar la bateria, que és gran i pesada. Anirà connectada tant a la Raspberry com a la impressora, perquè cap de les dues es quedi sense energia i és fàcilment extraïble per un dels costats:</p>
+@photos
+@fig wide | 10-29-02 | Base de porexpan amb la bateria | La base amb la bateria
+@end
+<p>Després afegim un segon pis, on aniran tant la impressora com la Raspberry:</p>
+@photos
+@fig wide | 10-29-03 | Segon pis amb la impressora i la Raspberry | El segon pis
+@end
+<p>I muntem una a sobre de l'altra, fent foradets on faci falta passar cables per fora:</p>
+@photos
+@fig wide | 10-29-04 | Els dos pisos muntats un sobre l'altre | Els dos pisos muntats
+@end
+<p>Per últim posem una "tapa" a sobre amb una ranura suficient perquè es puguin imprimir les fotos sense cap problema i on veiem el led d'estat de la impressora:</p>
+@photos
+@fig wide | 10-29-05 | Tapa de porexpan amb la ranura per al paper | La tapa amb la ranura
+@end
+<p>Així queda vista per la part de davant:</p>
+@photos
+@fig wide | 10-29-06 | Vista frontal del prototip de porexpan | Vista de davant
+@end
+<p>He fet una prova agafant la càmera i tot funciona correctament, el problema ara és que les fotos surten amb massa contrast i que he de calibrar d'alguna manera l'enfocament.</p>
+<p>Pel problema del contrast, canviem aquesta part del codi:</p>
+<pre><code>print("\n--------------------------------------------------")
+print("3. PROCESANDO IMAGEN...")
+print("--------------------------------------------------")
+
+imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+imagen_vertical = imagen_original.rotate(90, expand=True)
+
+ancho_fijo = 384
+alto_proporcional = int((imagen_vertical.height * ancho_fijo) / imagen_vertical.width)
+imagen_redimensionada = imagen_vertical.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+# AJUSTES OPTIMIZADOS PARA IMPRESORA TÉRMICA:
+# 1. Suavizamos el contraste (antes tenías 1.8, lo bajamos a un rango más natural)
+imagen_contrastada = ImageEnhance.Contrast(imagen_redimensionada).enhance(1.1)
+
+# 2. Subimos el brillo (antes tenías 0.95, lo subimos para aclarar las sombras)
+imagen_ajustada = ImageEnhance.Brightness(imagen_contrastada).enhance(1.3)
+
+# 3. Aplicamos un filtro de nitidez moderado
+imagen_nitida = imagen_ajustada.filter(ImageFilter.SHARPEN)
+
+# 4. CONVERSIÓN CON DITHERING (Floyd-Steinberg):
+# Al usar Image.DITHER.FLOYDSTEINBERG, creamos texturas de puntos que evitan los manchones negros
+imatge_final = imagen_nitida.convert("1", dither=Image.DITHER.FLOYDSTEINBERG)</code></pre>
+<p>I ens queda com a {{polaroid_pi_v2.py}}</p>
+<div class="callout"><p class="label">Important!</p>
+<p>A partir d'ara, com hem canviat el codi, també hem de canviar <code>sudo nano /etc/systemd/system/polaroid.service</code> i posar el nou nom d'arxiu i després fer:</p></div>
+<pre><code>sudo systemctl daemon-reload
+sudo systemctl restart polaroid.service</code></pre>
+<p>per reiniciar el servei.</p>
+<p>Ara m'agradaria fer test amb l'enfocament per saber on posar-hi exactament l'objectiu de la càmera a la carcassa, així que creo un nou script anomenat {{test_enfoque.py}} que només envia la foto al Telegram i no toca la impressora.</p>
+
+@day 30/10 | Dia 8 | Prototip OK i disseny 3D amb Autodesk | Prototip i disseny 3D
+<p>Avui he acabat de muntar el primer prototip i he canviat una mica el codi ({{polaroid_pi_v3.py}}) perquè la foto s'enviï per Telegram encara que la impressora no estigui operativa.</p>
+<p>He d'enrecordar-me cada vegada que faig canvis al codi de fer:</p>
+<pre><code>sudo systemctl daemon-reload
+sudo systemctl restart polaroid.service</code></pre>
+<p>Després he fet unes quantes proves i tot bé:</p>
+@photos
+@fig wide | 10-30-01 | Prototip de porexpan durant les proves | Proves amb el prototip
+@fig wide | 10-30-02 | Prototip amb la càmera muntada al davant | El prototip
+@end
+<p>Així que hem passat la resta del matí amb el Joan dissenyant la carcassa al programa <b>Autodesk Fusion</b> per poder imprimir-la en 3D.</p>
+<p>Aquests són els esbossos de càlcul de distàncies:</p>
+@photos
+@fig wide | 10-30-03 | Esbossos a llibreta amb mesures de la carcassa | Esbossos de distàncies
+@end
+<p>Pendent:</p>
+<ul><li>Afegir led RGB d'estat.</li><li>Impressió 3D de la carcassa.</li></ul>
+
+@day 02/11 | Dia 9 | Adaptació de la caixa 3D | Caixa 3D
+<p>Avui ha arribat la primera versió de la impressió 3D de la carcassa. A primera vista sembla que tot bé:</p>
+@photos
+@fig wide | 11-02-01 | Peces impreses en 3D en verd i lila | La caixa impresa en 3D
+@fig wide | 11-02-02 | Impressora i Raspberry dins la caixa verda | Tot a dins
+@end
+<p>Però en intentar connectar-ho tot trobo els primers problemes de disseny.</p>
+<p>El primer problema és que no vaig tenir en compte la mida de la capçalera del connector microUSB i no cap pel foradet:</p>
+@photos
+@fig wide | 11-02-03 | Connector microUSB que no cap pel forat | El microUSB no hi cap
+@end
+<p>I el segon problema és que no vaig calcular bé la distància del connector de la impressora i per tant el cable tampoc es pot connectar:</p>
+@photos
+@fig wide | 11-02-04 | Connector de la impressora mal alineat | El connector de la impressora
+@end
+<p>Així que s'haurà de modificar una mica la caixa perquè hi càpiguen.</p>
+<p>Primer creiem que s'hauria de llimar la caixa d'alguna manera, però després hem descobert que es pot "soldar" la caixa per fondre el material, així que ho hem provat:</p>
+@photos
+@fig wide | 11-02-05 | Fonent el plàstic de la caixa amb el soldador | "Soldant" la caixa
+@end
+<p>I ha quedat prou bé, donades les circumstàncies:</p>
+@photos
+@fig wide | 11-02-06 | Forat ampliat a la caixa verda | Forat ampliat
+@fig wide | 11-02-07 | Un altre forat ampliat a la caixa | Ara sí que hi cap
+@end
+<p>Ara passem a dissenyar la tapa que estarà a sobre, amb un forat a la zona esquerra per poder imprimir les fotos i amb un visor on col·locar la càmera:</p>
+@photos
+@fig | 11-02-08 | Esbós de la tapa amb el visor | Esbós de la tapa
+@end
+
+@day 03/11 | Dia 10 | Aprenent Autodesk Fusion | Aprenent Fusion
+<p>Avui hem de dissenyar la tapa de la càmera amb Autodesk Fusion. Intento descarregar la versió gratuïta per aprendre a utilitzar el programa jo mateix.</p>
+<p>Primer fent el pla:</p>
+@photos
+@fig wide fit | 11-03-01 | Croquis de la tapa a Autodesk Fusion | El pla
+@end
+<p>I al cap d'un parell d'hores d'aprenentatge, he pogut completar la tapa:</p>
+@photos
+@fig wide fit | 11-03-02 | Model 3D de la tapa acabada | La tapa acabada
+@end
+<p>Encara falta la tapeta del visor, que la faré a part.</p>
+<p>Mesurem les distàncies:</p>
+@photos
+@fig wide | 11-03-03 | Esbós amb mesures del visor i un regle | Mesures del visor
+@end
+<p>I comencem a dissenyar amb Autodesk, de moment deixant-lo a mitges per demà:</p>
+@photos
+@fig wide fit | 11-03-04 | Model 3D del visor a mig fer | Visor a mitges
+@end
+
+@day 04/11 | Dia 11 | Disseny peces Autodesk | Peces 3D
+<p>Avui continuem dissenyant la tapa del visor amb Autodesk Fusion i l'acabem:</p>
+@photos
+@fig wide fit | 11-04-01 | Model 3D de la tapa del visor | Tapa del visor
+@end
+<p>I fem la base de la caixeta per posar-hi els botons:</p>
+@photos
+@fig wide fit | 11-04-02 | Model 3D de la base de la caixeta dels botons | Base de la caixeta
+@end
+<p>També la seva tapa:</p>
+@photos
+@fig wide fit | 11-04-03 | Model 3D de la tapa de la caixeta | Tapa de la caixeta
+@end
+<p>I els botons:</p>
+@photos
+@fig wide fit | 11-04-04 | Model 3D d'un botó | Els botons
+@end

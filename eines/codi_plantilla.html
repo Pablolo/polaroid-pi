@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Polaroid Pi · Codi</title>
+<meta name="description" content="Tots els scripts en Python del projecte Polaroid Pi.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: same notebook paper as the home page; a contents grid, then one block per script */
+:root {
+  --paper: #f2f3f0; --ink: #1c2130; --muted: #5b6270; --rule: #d5d8d1; --raspberry: #b3174a;
+  --code-bg: #e8eae5; --c-kw: #8a1640; --c-str: #2f6b3a; --c-com: #7b818c; --c-num: #9a5b00; --c-fn: #224f9c;
+  --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #14161a; --ink: #e6e7e3; --muted: #9ba1ab; --rule: #2b2f36; --raspberry: #f0587f;
+    --code-bg: #1d2026; --c-kw: #f58aa8; --c-str: #9ad3a1; --c-com: #7d8490; --c-num: #f0b866; --c-fn: #8fb6f5; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #14161a; --ink: #e6e7e3; --muted: #9ba1ab; --rule: #2b2f36; --raspberry: #f0587f;
+  --code-bg: #1d2026; --c-kw: #f58aa8; --c-str: #9ad3a1; --c-com: #7d8490; --c-num: #f0b866; --c-fn: #8fb6f5; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a { color: var(--raspberry); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 3px; }
+code { font-family: var(--mono); font-size: .9em; }
+.wrap { max-width: 1080px; margin: 0 auto; }
+.top {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding-block: 14px; border-bottom: 1px solid var(--rule);
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--paper);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 31; background: var(--paper); }
+:root { --head-h: 70px; }
+html { scroll-padding-top: calc(var(--head-h) + 16px); }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 500 .78rem/1 var(--mono); text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink); text-decoration: none; background: var(--paper);
+  padding: 9px 12px 8px; border: 1.5px solid var(--ink); border-bottom-width: 4px; border-radius: 6px;
+  transition: transform .08s ease, background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.btn:hover { background: var(--raspberry); border-color: var(--raspberry); color: var(--paper); }
+.btn:active { transform: translateY(2px); border-bottom-width: 2px; margin-bottom: 2px; }
+.btn:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 3px; }
+.btn.primary { background: var(--raspberry); border-color: var(--raspberry); color: var(--paper); }
+.btn.primary:hover { background: var(--ink); border-color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:active { transform: none; } }
+.label { font: 500 .75rem/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 0; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; margin: 0; text-wrap: balance; }
+.intro { padding-block: 48px 32px; display: grid; gap: 14px; max-width: 64ch; }
+.intro h1 { font-size: clamp(2.6rem, 7vw, 4.2rem); font-weight: 800; letter-spacing: -.04em; }
+.intro p { margin: 0; color: var(--muted); }
+.note { border-left: 3px solid var(--raspberry); padding: 4px 0 4px 16px; font-size: .95rem; }
+.toc { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; padding-block: 24px 40px; border-bottom: 1px solid var(--rule); }
+.toc h3 { font-size: 1rem; margin-bottom: 8px; }
+.toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.toc a { text-decoration: none; }
+.toc a code { color: var(--raspberry); font-size: .82rem; overflow-wrap: anywhere; }
+.toc a:hover code { text-decoration: underline; }
+h2.group { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; letter-spacing: -.02em; padding-top: 56px; }
+.file { padding-block: 28px; border-bottom: 1px dashed var(--rule); display: grid; gap: 12px; }
+.file header { display: grid; gap: 4px; }
+.file h3 code { font-size: 1.25rem; font-weight: 500; overflow-wrap: anywhere; }
+.file .desc { margin: 0; }
+.file .meta { margin: 0; font: 400 .82rem/1.4 var(--mono); color: var(--muted); }
+.file:target h3 code { color: var(--raspberry); }
+pre { margin: 0; background: var(--code-bg); border-radius: 4px; padding: 16px; overflow: auto; max-height: 34rem; font-size: .8rem; line-height: 1.55; tab-size: 4; }
+pre code { font-size: inherit; }
+.hljs-keyword, .hljs-built_in, .hljs-literal { color: var(--c-kw); }
+.hljs-string, .hljs-subst { color: var(--c-str); }
+.hljs-comment { color: var(--c-com); font-style: italic; }
+.hljs-number { color: var(--c-num); }
+.hljs-title, .hljs-title.function_ { color: var(--c-fn); }
+footer { padding-block: 32px 48px; color: var(--muted); font-size: .9rem; }
+@media (max-width: 860px) { .toc { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .toc { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  .top { flex-wrap: nowrap; gap: 12px; }
+  .top nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; padding-block: 2px 4px; scrollbar-width: none; }
+  .top nav::-webkit-scrollbar { display: none; }
+  .top .btn { flex: none; }
+}
+.stripe { display: inline-flex; height: 18px; border-radius: 3px; overflow: hidden; flex: none; }
+.stripe i { width: 5px; }
+.stripe i:nth-child(1) { background: #d6453d; } .stripe i:nth-child(2) { background: #ee8a2f; }
+.stripe i:nth-child(3) { background: #f1c232; } .stripe i:nth-child(4) { background: #4f9f68; }
+.stripe i:nth-child(5) { background: #2f78c0; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 800 1.1rem/1 var(--display); letter-spacing: -.01em; flex: none; }
+.brand:hover { color: var(--raspberry); }
+.brand:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 4px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<header class="top wrap">
+  <a class="brand" href="index.html"><span class="stripe" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>Polaroid Pi</a>
+  <a class="btn" href="index.html">← Tornar al projecte</a>
+</header>
+<main class="wrap">
+  <div class="intro">
+    <p class="label">Codi</p>
+    <h1>Scripts en Python</h1>
+    <p>Els <!--N--> programes del projecte, en l'ordre en què els vam escriure. Cada un enllaça al dia del diari on surt.</p>
+    <p class="note">El token del bot de Telegram i l'ID del xat s'han tret de tots els scripts. Per fer-los funcionar, posa-hi els teus a <code>POSA_AQUI_EL_TOKEN_DEL_BOT</code> i <code>POSA_AQUI_EL_TEU_CHAT_ID</code>. No conservem aquests scripts de les proves del 23/10: <!--FALTEN-->.</p>
+  </div>
+  <nav class="toc" aria-label="Índex de scripts">
+<!--TOC-->
+  </nav>
+<!--FITXERS-->
+</main>
+<footer class="wrap">Polaroid Pi · Projecte IOT CIFO La Violeta 2026</footer>
+<script>
+(function () {
+  // Alçada real del menú fix, perquè l'índex del diari i els enllaços quedin just a sota
+  var h = document.querySelector('.top');
+  function set() { document.documentElement.style.setProperty('--head-h', h.offsetHeight + 'px'); }
+  set(); window.addEventListener('resize', set);
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>if (window.hljs) document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });</script>
+</body>
+</html>

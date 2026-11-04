@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Polaroid Pi</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Diari de construcció de Polaroid Pi: una càmera instantània feta amb una Raspberry Pi que imprimeix les fotos en paper tèrmic i les envia per Telegram.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Caveat:wght@500&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: a lab notebook — thermal-paper page, dated entries down a timeline, photos as polaroid frames */
+:root {
+  --paper: #f2f3f0;
+  --ink: #1c2130;
+  --muted: #5b6270;
+  --rule: #d5d8d1;
+  --raspberry: #b3174a;
+  --frame: #fcfcfa;
+  --frame-ink: #2a2e38;
+  --code-bg: #e5e7e2;
+  --shadow: rgba(28, 33, 48, .14);
+  --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --hand: "Caveat", "Comic Sans MS", cursive;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #14161a; --ink: #e6e7e3; --muted: #9ba1ab; --rule: #2b2f36;
+    --raspberry: #f0587f; --frame: #e3e3dd; --frame-ink: #23262d; --code-bg: #1e2127;
+    --shadow: rgba(0, 0, 0, .5); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #14161a; --ink: #e6e7e3; --muted: #9ba1ab; --rule: #2b2f36;
+  --raspberry: #f0587f; --frame: #e3e3dd; --frame-ink: #23262d; --code-bg: #1e2127;
+  --shadow: rgba(0, 0, 0, .5); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 400 1.0625rem/1.65 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+img { max-width: 100%; display: block; }
+a { color: var(--raspberry); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 3px; border-radius: 2px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; letter-spacing: -.02em; }
+h3 { font-size: 1.35rem; font-weight: 600; }
+p { margin: 0; }
+code, pre, kbd { font-family: var(--mono); font-size: .88em; }
+:not(pre) > code { background: var(--code-bg); padding: .1em .35em; border-radius: 3px; }
+pre {
+  margin: 0; background: var(--code-bg); padding: 14px 16px; border-radius: 4px;
+  overflow-x: auto; line-height: 1.5; font-size: .84rem;
+}
+.wrap { max-width: 1080px; margin: 0 auto; }
+.label {
+  font: 500 .75rem/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--muted);
+}
+
+/* ---------- Capçalera ---------- */
+.top {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding-block: 14px; border-bottom: 1px solid var(--rule);
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--paper);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 31; background: var(--paper); }
+:root { --head-h: 70px; }
+html { scroll-padding-top: calc(var(--head-h) + 16px); }
+.top nav { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 500 .78rem/1 var(--mono); text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink); text-decoration: none; background: var(--paper);
+  padding: 9px 12px 8px; border: 1.5px solid var(--ink); border-bottom-width: 4px; border-radius: 6px;
+  transition: transform .08s ease, background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.btn:hover { background: var(--raspberry); border-color: var(--raspberry); color: var(--paper); }
+.btn:active { transform: translateY(2px); border-bottom-width: 2px; margin-bottom: 2px; }
+.btn:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 3px; }
+.btn.primary { background: var(--raspberry); border-color: var(--raspberry); color: var(--paper); }
+.btn.primary:hover { background: var(--ink); border-color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:active { transform: none; } }
+
+/* ---------- Hero ---------- */
+.hero {
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 48px;
+  align-items: center; padding-block: 64px 72px;
+}
+.hero h1 { margin-top: 14px; font-size: clamp(3.2rem, 9vw, 6.4rem); font-weight: 800; letter-spacing: -.045em; line-height: .92; }
+.hero h1 span { color: var(--raspberry); }
+.hero .lead { font-size: 1.25rem; max-width: 34ch; margin-top: 22px; }
+.status {
+  display: inline-flex; align-items: center; gap: 10px; margin-top: 26px;
+  font: 500 .85rem/1 var(--mono); color: var(--muted);
+}
+.status::before {
+  content: ""; width: 10px; height: 10px; border-radius: 50%; background: #e0a100;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #e0a100 30%, transparent);
+}
+.specs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; padding: 0; list-style: none; }
+.specs li { font: 400 .8rem/1 var(--mono); border: 1px solid var(--rule); padding: 7px 10px; border-radius: 3px; }
+
+.stripe { display: inline-flex; height: 18px; border-radius: 3px; overflow: hidden; flex: none; }
+.stripe i { width: 5px; }
+.stripe i:nth-child(1) { background: #d6453d; } .stripe i:nth-child(2) { background: #ee8a2f; }
+.stripe i:nth-child(3) { background: #f1c232; } .stripe i:nth-child(4) { background: #4f9f68; }
+.stripe i:nth-child(5) { background: #2f78c0; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 800 1.1rem/1 var(--display); letter-spacing: -.01em; flex: none; }
+.brand:hover { color: var(--raspberry); }
+.brand:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 4px; border-radius: 2px; }
+
+/* Càmera instantània il·lustrada */
+.camera { justify-self: center; width: min(100%, 440px); position: relative; }
+.camera-body { display: block; width: 100%; height: auto; position: relative; z-index: 2; filter: drop-shadow(0 18px 26px var(--shadow)); }
+
+/* ---------- Seccions ---------- */
+section { padding-block: 72px; border-top: 1px solid var(--rule); }
+.sec-head { display: grid; gap: 12px; margin-bottom: 36px; max-width: 62ch; }
+.sec-head p { color: var(--muted); }
+
+/* Com funciona */
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; list-style: none; padding: 0; margin: 0; counter-reset: pas; }
+.flow li { padding: 18px 18px 0 0; border-top: 3px solid var(--ink); position: relative; min-width: 0; }
+.flow li::before {
+  counter-increment: pas; content: counter(pas); display: block;
+  font: 800 2.4rem/1 var(--display); color: var(--raspberry); margin-bottom: 10px;
+}
+.flow h3 { font-size: 1.1rem; margin-bottom: 6px; }
+.flow p { font-size: .95rem; color: var(--muted); }
+
+/* Components */
+.parts-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 48px; align-items: start; }
+.table-scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .97rem; }
+th, td { text-align: left; padding: 11px 10px 11px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 500 .72rem/1 var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-right: 0; }
+tfoot td { border-bottom: 0; font-weight: 600; padding-top: 14px; }
+td small { display: block; color: var(--muted); font-size: .85rem; }
+
+.pins { display: grid; gap: 14px; }
+.pin { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; padding: 16px 0; border-bottom: 1px solid var(--rule); }
+.pin code { grid-row: span 2; align-self: start; background: var(--ink); color: var(--paper); padding: 6px 9px; font-weight: 500; }
+.pin span { color: var(--muted); font-size: .93rem; }
+.note { font-size: .93rem; color: var(--muted); margin-top: 18px; }
+
+/* ---------- Diari ---------- */
+.day {
+  display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 36px;
+  padding-block: 44px; border-top: 1px dashed var(--rule);
+}
+.day:first-of-type { border-top: 0; padding-top: 0; }
+.day-date { position: sticky; top: calc(var(--head-h) + env(safe-area-inset-top, 0px) + 20px); align-self: start; }
+.day-date b { display: block; font: 800 2.6rem/1 var(--display); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.day-date span { font: 500 .78rem/1.4 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+.day-body { display: grid; gap: 18px; min-width: 0; }
+.day-body > :not(.photos):not(pre) { max-width: 70ch; }
+.day-body > pre { max-width: 100%; }
+.day-body h3 { font-size: 1.6rem; letter-spacing: -.01em; }
+.day-body ul, .day-body ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+
+.day-body h4 { font: 600 1.15rem/1.2 var(--display); margin-top: 10px; }
+.day-body blockquote { margin: 0; padding: 16px 18px; background: var(--code-bg); border-radius: 4px; display: grid; gap: 10px; font-size: .93rem; font-style: italic; }
+.day-body .aside { font-size: .9rem; color: var(--muted); }
+.code-link { text-decoration: none; }
+.code-link-plain { color: var(--raspberry); text-decoration: underline; text-underline-offset: 2px; }
+.code-link code { color: var(--raspberry); text-decoration: underline; text-underline-offset: 2px; }
+.code-link:hover code { background: color-mix(in srgb, var(--raspberry) 14%, transparent); }
+
+.code-index { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; }
+.code-index h3 { font-size: 1.05rem; margin-bottom: 10px; }
+.code-index ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.code-index code { font-size: .82rem; overflow-wrap: anywhere; }
+@media (max-width: 860px) { .code-index { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .code-index { grid-template-columns: minmax(0, 1fr); } }
+
+.schematic { margin: 48px 0 0; display: grid; gap: 10px; }
+.schematic .zoom { all: unset; cursor: zoom-in; display: block; background: #fff; border: 1px solid var(--rule); border-radius: 4px; padding: 8px; }
+.schematic .zoom:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 3px; }
+.schematic img { width: 100%; height: auto; }
+.schematic figcaption { font-size: .9rem; color: var(--muted); }
+
+/* Índex de dies del diari */
+.diari-layout { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 88px; align-items: start; }
+.diari-days { min-width: 0; grid-column: 1; grid-row: 1; }
+.day-nav { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--head-h) + env(safe-area-inset-top, 0px) + 20px); display: grid; gap: 10px; }
+.day-nav .label { padding-left: 12px; }
+.day-nav ol { list-style: none; margin: 0; padding: 0; display: grid; border-left: 2px solid var(--rule); }
+.day-nav a { display: grid; gap: 1px; padding: 6px 0 6px 12px; margin-left: -2px; border-left: 2px solid transparent; text-decoration: none; color: var(--muted); }
+.day-nav a b { font: 600 .95rem/1.1 var(--display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.day-nav a span { font: 400 .8rem/1.25 var(--body); }
+.day-nav a:hover b, .day-nav a[aria-current="true"] b { color: var(--raspberry); }
+.day-nav a[aria-current="true"] { border-left-color: var(--raspberry); }
+.day-nav a:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 2px; }
+
+/* Botó per pujar */
+.to-top {
+  position: fixed; z-index: 20;
+  right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 6px 18px var(--shadow);
+  opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility .2s, transform .08s ease, background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.to-top.visible { opacity: 1; visibility: visible; }
+
+@media (max-width: 1000px) {
+  .diari-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .day-nav {
+    grid-column: 1; grid-row: 1; z-index: 5; top: calc(var(--head-h) + env(safe-area-inset-top, 0px));
+    background: var(--paper); border-bottom: 1px solid var(--rule); padding-block: 10px; margin-bottom: 24px;
+  }
+  .day-nav .label { display: none; }
+  .day-nav ol { display: flex; gap: 6px; overflow-x: auto; border-left: 0; scrollbar-width: thin; }
+  .day-nav a { flex: none; margin: 0; padding: 6px 10px; border: 1.5px solid var(--rule); border-radius: 6px; }
+  .day-nav a { gap: 2px; }
+  .day-nav a span { font-size: .72rem; white-space: nowrap; }
+  .day-nav a[aria-current="true"] { border-color: var(--raspberry); }
+  .day { scroll-margin-top: 64px; }
+}
+@media (prefers-reduced-motion: reduce) { .to-top { transition: none; } }
+
+.thanks { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 48px; align-items: center; }
+.thanks-text { display: grid; gap: 14px; max-width: 60ch; }
+.thanks-text p:not(.label) { color: var(--ink); }
+.thanks-logo { display: block; border-radius: 6px; overflow: hidden; border: 1px solid var(--rule); justify-self: end; width: 200px; max-width: 100%; }
+.thanks-logo img { display: block; width: 100%; height: auto; }
+@media (max-width: 640px) { .thanks { grid-template-columns: minmax(0, 1fr); gap: 28px; } .thanks-logo { justify-self: start; width: 160px; } }
+
+.callout { border-left: 3px solid var(--raspberry); padding: 4px 0 4px 16px; display: grid; gap: 6px; }
+.callout .label { color: var(--raspberry); }
+
+/* Polaroids */
+.photos { display: flex; flex-wrap: wrap; gap: 22px; padding-block: 6px; }
+.pol {
+  margin: 0; background: var(--frame); color: var(--frame-ink); padding: 10px 10px 0;
+  box-shadow: 0 6px 18px var(--shadow); width: 320px; max-width: 100%;
+  transform: rotate(-1deg); transition: transform .2s ease;
+}
+.pol:nth-child(even) { transform: rotate(1.2deg); }
+.pol:hover { transform: rotate(0) scale(1.02); }
+@media (prefers-reduced-motion: reduce) { .pol, .pol:nth-child(even), .pol:hover { transform: none; transition: none; } }
+.pol.wide { width: 500px; }
+.pol button { all: unset; cursor: zoom-in; display: block; width: 100%; }
+.pol button:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 2px; }
+.pol img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; background: #ddd; }
+.pol.wide img { aspect-ratio: 16 / 10; }
+.pol.fit img { object-fit: contain; background: #fff; }
+.pol figcaption { font: 500 1.2rem/1.15 var(--hand); padding: 10px 2px 14px; min-height: 3.2em; }
+
+/* Lliçons i propers passos */
+.lessons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 48px; }
+.lesson { padding: 22px 0; border-bottom: 1px solid var(--rule); display: grid; gap: 8px; min-width: 0; }
+.lesson h3 { font-size: 1.15rem; }
+.lesson p { color: var(--muted); font-size: .97rem; }
+
+
+footer { border-top: 1px solid var(--rule); padding-block: 32px 48px; color: var(--muted); font-size: .9rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+/* Visor d'imatges */
+dialog {
+  border: 0; padding: 0; background: transparent; max-width: min(1100px, 94vw); max-height: 92vh;
+}
+dialog::backdrop { background: rgba(10, 11, 14, .86); }
+dialog img { max-height: 82vh; width: auto; margin: 0 auto; }
+dialog p { color: #f2f3f0; font: 500 1.4rem/1.2 var(--hand); text-align: center; padding-top: 10px; }
+dialog button {
+  position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(14px + env(safe-area-inset-right, 0px));
+  background: #f2f3f0; color: #1c2130; border: 0; border-radius: 50%; width: 42px; height: 42px;
+  font: 600 1.3rem/1 var(--body); cursor: pointer;
+}
+
+/* ---------- Mòbil ---------- */
+@media (max-width: 860px) {
+  .hero, .parts-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .hero { padding-block: 40px 56px; }
+  .flow { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .flow li { padding-right: 0; }
+  .lessons { grid-template-columns: minmax(0, 1fr); }
+  .day { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .day-date { position: static; display: flex; align-items: baseline; gap: 12px; }
+  .day-date b { font-size: 2rem; }
+}
+@media (max-width: 520px) {
+  .photos { gap: 18px; justify-content: center; }
+  .pol, .pol.wide { width: 100%; }
+  section { padding-block: 52px; }
+}
+@media (max-width: 640px) {
+  .top { flex-wrap: nowrap; gap: 12px; }
+  .top nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; padding-block: 2px 4px; scrollbar-width: none; }
+  .top nav::-webkit-scrollbar { display: none; }
+  .top .btn { flex: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="top wrap" id="inici">
+  <a class="brand" href="#inici"><span class="stripe" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>Polaroid Pi</a>
+  <nav aria-label="Seccions">
+    <a class="btn" href="#funcionament">Com funciona</a>
+    <a class="btn" href="#components">Components</a>
+    <a class="btn" href="#diari">Diari</a>
+    <a class="btn primary" href="codi.html">Codi →</a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <div>
+      <p class="label">Projecte IOT CIFO La Violeta 2026</p>
+      <h1>Polaroid <span>Pi</span></h1>
+      <p class="lead">Una càmera portàtil que imprimeix les fotos a l'instant en paper tèrmic i, alhora, les envia en color al mòbil per Telegram.</p>
+      <p class="status">En construcció · actualitzat el 04/11/2026</p>
+      <ul class="specs" aria-label="Maquinari principal">
+        <li>Raspberry Pi 4</li>
+        <li>Pi Camera v1.3</li>
+        <li>Impressora tèrmica BLE</li>
+        <li>Python</li>
+        <li>Telegram</li>
+      </ul>
+    </div>
+    <div class="camera" role="img" aria-label="Il·lustració d'una càmera instantània">
+      <svg class="camera-body" viewBox="0 0 440 300" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="cos-alt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f3ef"/><stop offset="1" stop-color="#dcdad3"/></linearGradient>
+          <linearGradient id="cos-baix" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2f3b"/><stop offset="1" stop-color="#171a22"/></linearGradient>
+          <radialGradient id="vidre" cx=".38" cy=".34" r=".75"><stop offset="0" stop-color="#4a6a96"/><stop offset=".45" stop-color="#1b2740"/><stop offset="1" stop-color="#05070c"/></radialGradient>
+          <linearGradient id="flash" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e3e1da"/></linearGradient>
+          <clipPath id="cos-retall"><rect x="20" y="40" width="400" height="236" rx="26"/></clipPath>
+        </defs>
+        <!-- botó disparador (vermell, com el de GPIO17) -->
+        <rect x="318" y="22" width="44" height="26" rx="8" fill="#9c2530"/>
+        <rect x="320" y="20" width="40" height="20" rx="7" fill="#d23a45"/>
+        <rect x="326" y="23" width="18" height="4" rx="2" fill="#fff" opacity=".35"/>
+        <!-- cos -->
+        <g clip-path="url(#cos-retall)">
+          <rect x="20" y="40" width="400" height="236" fill="url(#cos-baix)"/>
+          <rect x="20" y="40" width="400" height="96" fill="url(#cos-alt)"/>
+          <rect x="20" y="134" width="400" height="3" fill="#0d0f14" opacity=".35"/>
+          <!-- banda de colors -->
+          <g>
+            <rect x="196" y="137" width="10" height="139" fill="#d6453d"/>
+            <rect x="206" y="137" width="10" height="139" fill="#ee8a2f"/>
+            <rect x="216" y="137" width="10" height="139" fill="#f1c232"/>
+            <rect x="226" y="137" width="10" height="139" fill="#4f9f68"/>
+            <rect x="236" y="137" width="10" height="139" fill="#2f78c0"/>
+          </g>
+        </g>
+        <rect x="20" y="40" width="400" height="236" rx="26" fill="none" stroke="#0d0f14" stroke-opacity=".25"/>
+        <!-- flash -->
+        <rect x="46" y="62" width="104" height="50" rx="8" fill="#c9c6bd"/>
+        <rect x="50" y="66" width="96" height="42" rx="6" fill="url(#flash)"/>
+        <g stroke="#cfccc3" stroke-width="1.5">
+          <line x1="62" y1="68" x2="62" y2="106"/><line x1="74" y1="68" x2="74" y2="106"/><line x1="86" y1="68" x2="86" y2="106"/><line x1="98" y1="68" x2="98" y2="106"/><line x1="110" y1="68" x2="110" y2="106"/><line x1="122" y1="68" x2="122" y2="106"/><line x1="134" y1="68" x2="134" y2="106"/>
+        </g>
+        <!-- visor -->
+        <rect x="336" y="64" width="62" height="44" rx="9" fill="#1a1e27"/>
+        <rect x="342" y="70" width="50" height="32" rx="6" fill="url(#vidre)"/>
+        <path d="M346 74 h20 l-14 14 h-6 z" fill="#fff" opacity=".22"/>
+        <!-- etiqueta -->
+        <text x="174" y="96" font-family="IBM Plex Mono, ui-monospace, monospace" font-size="13" font-weight="500" letter-spacing="3" fill="#5b6270">PI · 384</text>
+        <!-- objectiu -->
+        <circle cx="316" cy="198" r="64" fill="#0d0f14"/>
+        <circle cx="316" cy="198" r="58" fill="#2b303b"/>
+        <circle cx="316" cy="198" r="58" fill="none" stroke="#3b4150" stroke-width="2" stroke-dasharray="2 4"/>
+        <circle cx="316" cy="198" r="44" fill="#0a0c11"/>
+        <circle cx="316" cy="198" r="38" fill="url(#vidre)"/>
+        <circle cx="316" cy="198" r="16" fill="#05070c" opacity=".7"/>
+        <ellipse cx="302" cy="182" rx="12" ry="7" fill="#fff" opacity=".35" transform="rotate(-30 302 182)"/>
+        <circle cx="331" cy="214" r="3" fill="#fff" opacity=".2"/>
+        <!-- LED d'estat -->
+        <circle cx="62" cy="160" r="5" fill="#3fc06a"/>
+        <circle cx="62" cy="160" r="9" fill="#3fc06a" opacity=".18"/>
+        <!-- ranura de sortida -->
+        <rect x="70" y="256" width="300" height="12" rx="6" fill="#06070a"/>
+        <rect x="74" y="262" width="292" height="3" rx="1.5" fill="#000"/>
+      </svg>
+    </div>
+  </div>
+
+  <section id="funcionament">
+    <div class="sec-head">
+      <p class="label">Com funciona</p>
+      <h2>De prémer el botó a tenir la foto a la mà</h2>
+      <p>Quan s'encén, la Raspberry arrenca sola el programa <a class="code-link" href="codi.html#f-polaroid-pi-v3-py"><code>polaroid_pi_v3.py</code></a> amb systemd. A partir d'aquí, cada foto segueix aquests passos:</p>
+    </div>
+    <ol class="flow">
+      <li><h3>Botó</h3><p>Es prem el botó connectat a <code>GPIO17</code>.</p></li>
+      <li><h3>Foto</h3><p><code>rpicam-still</code> fa la foto a 2592 × 1944 px i la guarda amb data i hora.</p></li>
+      <li><h3>Tramat</h3><p>Pillow la gira, la redueix a 384 px d'ample i la converteix a punts blancs i negres (dithering), amb un aire de Game Boy Camera.</p></li>
+      <li><h3>Impressió</h3><p>La imatge s'envia per Bluetooth Low Energy a la impressora, en paquets que imiten la seva app oficial.</p></li>
+      <li><h3>Telegram</h3><p>La foto original en color arriba al mòbil a través d'un bot, encara que la impressora no estigui disponible.</p></li>
+    </ol>
+  </section>
+
+  <section id="components">
+    <div class="sec-head">
+      <p class="label">Components</p>
+      <h2>Què porta a dins</h2>
+    </div>
+    <div class="parts-grid">
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Peça</th></tr></thead>
+          <tbody>
+            <tr><td><a href="https://www.raspberrypi.com/products/raspberry-pi-4-model-b/" target="_blank" rel="noopener">Raspberry Pi 4 Model B</a> amb targeta SD<small>Ja la teníem</small></td></tr>
+            <tr><td><a href="https://www.kubii.com/es/camaras-sensores/3610-modulo-de-camara-de-8-mp-para-raspberry-pi-3272496309692.html" target="_blank" rel="noopener">Mòdul de càmera</a><small>Raspberry Pi Camera v1.3</small></td></tr>
+            <tr><td><a href="https://www.amazon.es/dp/B0BW4PS6RY" target="_blank" rel="noopener">Impressora tèrmica NK-FA3300</a><small>Bluetooth Low Energy, paper de 57 mm</small></td></tr>
+            <tr><td><a href="https://www.reichelt.com/es/es/shop/producto/powerbank_li-po_20_000_mah_usb-c-320574" target="_blank" rel="noopener">Powerbank Goobay 20.000 mAh</a><small>Ja la teníem. Alimenta la Raspberry i la impressora</small></td></tr>
+            <tr><td>Botons<small>Encesa/apagada i disparador</small></td></tr>
+            <tr><td>Cable USB-C a microUSB<small>Per alimentar la Raspberry des de la powerbank</small></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <p class="label">Connexions</p>
+        <div class="pins">
+          <div class="pin"><code>GPIO17</code><b>Botó de fer la foto</b><span>L'altre pin del botó va a GND.</span></div>
+          <div class="pin"><code>GPIO3</code><b>Botó d'encesa i apagada</b><span>Cal mantenir-lo premut 3 segons per apagar. Amb la Raspberry apagada, una pulsació l'encén.</span></div>
+          <div class="pin"><code>CSI</code><b>Pi Camera</b><span>Connectada amb la cinta plana al port de càmera.</span></div>
+          <div class="pin"><code>BLE</code><b>Impressora</b><span>Sense cables de dades: rep les imatges per Bluetooth.</span></div>
+        </div>
+        <p class="note">L'esquema complet, fet amb Fritzing, és a sota.</p>
+      </div>
+    </div>
+    <figure class="schematic">
+      <button type="button" class="zoom" aria-label="Amplia l'esquema"><img src="img/fritzing.webp" width="1309" height="822" alt="Esquema de Fritzing: Raspberry Pi amb el botó disparador a GPIO17, el botó d'encesa a GPIO3, la càmera al port CSI, tres LEDs d'estat, la bateria i la impressora connectada per Bluetooth" loading="lazy"></button>
+      <figcaption>Esquema de connexions fet amb Fritzing (<code>projecte-polaroid-pi.fzz</code>), 21/10</figcaption>
+    </figure>
+  </section>
+
+  <section id="diari">
+    <div class="sec-head">
+      <p class="label">Diari de construcció</p>
+      <h2>Dia a dia</h2>
+      <p>Tot el procés, des de la primera prova amb una webcam fins al disseny de la carcassa en 3D. Clica una foto per veure-la gran.</p>
+    </div>
+
+    <div class="diari-layout">
+    <nav class="day-nav" aria-label="Dies del diari">
+<!-- NAV:INICI -->
+      <p class="label">Dies</p>
+      <ol>
+        <li><a href="#dia-21-10"><b>21/10</b><span>Webcam i Bluetooth</span></a></li>
+        <li><a href="#dia-22-10"><b>22/10</b><span>Impressora BLE</span></a></li>
+        <li><a href="#dia-23-10"><b>23/10</b><span>Primera impressió</span></a></li>
+        <li><a href="#dia-26-10"><b>26/10</b><span>Pi Camera</span></a></li>
+        <li><a href="#dia-27-10"><b>27/10</b><span>Telegram i botons</span></a></li>
+        <li><a href="#dia-28-10"><b>28/10</b><span>Soldadura</span></a></li>
+        <li><a href="#dia-29-10"><b>29/10</b><span>Auto-inici i porexpan</span></a></li>
+        <li><a href="#dia-30-10"><b>30/10</b><span>Prototip i disseny 3D</span></a></li>
+        <li><a href="#dia-02-11"><b>02/11</b><span>Caixa 3D</span></a></li>
+        <li><a href="#dia-03-11"><b>03/11</b><span>Aprenent Fusion</span></a></li>
+        <li><a href="#dia-04-11"><b>04/11</b><span>Peces 3D</span></a></li>
+      </ol>
+<!-- NAV:FI -->
+    </nav>
+    <div class="diari-days">
+<!-- DIARI:INICI -->
+    <article class="day" id="dia-21-10">
+      <div class="day-date"><b>21/10</b><span>Dia 1</span></div>
+      <div class="day-body">
+        <h3>Test webcam i primera prova Bluetooth</h3>
+<p>La primera càmera que puc provar és una webcam Creative Live! Cam 4K que es connecta mitjançant USB directament a la Raspberry.</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-21-01.webp" data-full="img/10-21-01.webp" width="700" height="394" alt="Webcam Creative connectada a la Raspberry Pi" loading="lazy" decoding="async"></button><figcaption>La webcam Creative Live! Cam 4K</figcaption></figure>
+        </div>
+<ul><li>Iniciem la Raspberry i posem el comandament <code>lsusb</code> per veure els dispositius.</li></ul>
+        <div class="photos">
+          <figure class="pol wide fit"><button type="button"><img src="img/mini/10-21-02.webp" data-full="img/10-21-02.webp" width="685" height="132" alt="Sortida de la comanda lsusb al terminal" loading="lazy" decoding="async"></button><figcaption>lsusb</figcaption></figure>
+        </div>
+<ul><li>Per testejar la càmera, instal·lem l'eina <i>fswebcam</i> a la terminal: <code>sudo apt update &amp;&amp; sudo apt install fswebcam</code> i després posem <code>fswebcam -r 1920x1080 --no-banner foto_limpia.jpg</code> on afegim la resolució, l'opció de que no aparegui la data a la foto i el nom de l'arxiu. Després tindrem que mirar si aquesta resolució és la ideal per la impressora (que encara no tenim) o s'ha de canviar.</li></ul>
+<p>Anava després a provar el bluetooth de la Raspberry perquè trobés els dispositius a prop (per quan tinguem l'impressora) però el comandament <code>scan on</code> de <code>bluetoothctl</code> a la terminal dona error.</p>
+        <div class="photos">
+          <figure class="pol fit"><button type="button"><img src="img/mini/10-21-03.webp" data-full="img/10-21-03.webp" width="622" height="700" alt="Passos per reinstal·lar i reiniciar el Bluetooth" loading="lazy" decoding="async"></button><figcaption>Passos per arreglar el Bluetooth</figcaption></figure>
+        </div>
+<p>Però segueix sense funcionar, així que ho deixem per demà.</p>
+      </div>
+    </article>
+
+    <article class="day" id="dia-22-10">
+      <div class="day-date"><b>22/10</b><span>Dia 2</span></div>
+      <div class="day-body">
+        <h3>Prova impressora tèrmica amb BLE</h3>
+<p>Avui rebem la impressora portàtil (<a href="https://www.amazon.es/dp/B0BW4PS6RY" target="_blank" rel="noopener">NK-FA3300</a>, tecnologia d'impressió tèrmica, connectivitat per Bluetooth i paper size 57×26 mm).</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-22-01.webp" data-full="img/10-22-01.webp" width="700" height="394" alt="La impressora tèrmica al costat de la Raspberry" loading="lazy" decoding="async"></button><figcaption>Arriba la impressora</figcaption></figure>
+        </div>
+<p>Fem una primera prova, connectant l'impressora des del mòbil i fent una foto a la Raspberry:</p>
+        <div class="photos">
+          <figure class="pol"><button type="button"><img src="img/mini/10-22-02.webp" data-full="img/10-22-02.webp" width="525" height="700" alt="Primera foto impresa des del mòbil" loading="lazy" decoding="async"></button><figcaption>Primera prova des del mòbil</figcaption></figure>
+        </div>
+<p>Ara continuem amb la configuració del bluetooth, que ahir no funcionava:</p>
+<pre><code><b>pi@raspberrypi:~ $ hciconfig -a</b>
+hci0:   Type: Primary  Bus: UART
+        BD Address: B8:27:EB:19:B4:7B  ACL MTU: 1021:8  SCO MTU: 64:1
+        DOWN
+        RX bytes:2149 acl:0 sco:0 events:169 errors:0
+        TX bytes:30660 acl:0 sco:0 commands:169 errors:0
+        Features: 0xbf 0xfe 0xcf 0xfe 0xdb 0xff 0x7b 0x87
+        Packet type: DM1 DM3 DM5 DH1 DH3 DH5 HV1 HV2 HV3
+        Link policy: RSWITCH SNIFF
+        Link mode: PERIPHERAL ACCEPT
+
+<b>pi@raspberrypi:~ $ systemctl status hciuart</b>
+hciuart.service - Configure Bluetooth Modems connected by UART
+     Loaded: loaded (/usr/lib/systemd/system/hciuart.service; enabled; preset: &gt;
+     Active: inactive (dead)</code></pre>
+<p>Aquests 2 comandaments ens diuen que no s'ha inicialitzat el firmware (DOWN i (dead)), així que obrim l'arxiu de configuració:</p>
+<pre><code>sudo nano /boot/firmware/config.txt</code></pre>
+<p>I afegim aquestes dues línies al final:</p>
+<pre><code>dtparam=krnbt=on
+dtparam=bluetooth=on</code></pre>
+<p>Guardem i continua sense funcionar, donant aquest error:</p>
+<pre><code>Can't init device hci0: Operation not possible due to RF-kill (132)</code></pre>
+<p>Significa que el Bluetooth està bloquejat per software a nivell de seguretat del SO, així que fem això:</p>
+<pre><code>sudo rfkill unblock bluetooth</code></pre>
+<p>I aixequem de nou:</p>
+<pre><code>sudo hciconfig hci0 up</code></pre>
+<p>I ara sí, per fi funciona:</p>
+<pre><code><b>pi@raspberrypi:~ $ hciconfig -a</b>
+hci0:   Type: Primary  Bus: UART
+        BD Address: B8:27:EB:19:B4:7B  ACL MTU: 1021:8  SCO MTU: 64:1
+        UP RUNNING
+        RX bytes:2855 acl:0 sco:0 events:209 errors:0
+        TX bytes:31361 acl:0 sco:0 commands:209 errors:0
+        Features: 0xbf 0xfe 0xcf 0xfe 0xdb 0xff 0x7b 0x87
+        Packet type: DM1 DM3 DM5 DH1 DH3 DH5 HV1 HV2 HV3
+        Link policy: RSWITCH SNIFF
+        Link mode: PERIPHERAL ACCEPT
+        Name: 'raspberrypi'
+        Class: 0x400000
+        Service Classes: Telephony
+        Device Class: Miscellaneous,
+        HCI Version: 4.1 (0x7)  Revision: 0x1fc
+        LMP Version: 4.1 (0x7)  Subversion: 0x2209
+        Manufacturer: Broadcom Corporation (15)</code></pre>
+<p>Ara hem de conseguir que la impressora es connecti amb la Raspberry. Per això fem una búsqueda de dispositius des de la terminal, a veure si trobem la direcció MAC de la impressora:</p>
+<pre><code><b>pi@raspberrypi:~ $ sudo bluetoothctl</b>
+[sudo] password for pi:
+hci0 new_settings: powered bondable ssp br/edr le secure-conn
+Agent registered
+[CHG] Controller B8:27:EB:19:B4:7B Pairable: yes
+
+<b>[bluetoothctl]&gt; scan on</b>
+SetDiscoveryFilter success
+hci0 type 7 discovering on
+Discovery started
+[CHG] Controller B8:27:EB:19:B4:7B Discovering: yes
+[NEW] Device 46:D8:CE:9C:E9:32 46-D8-CE-9C-E9-32
+[NEW] Device 70:EA:74:D6:2C:F5 70-EA-74-D6-2C-F5
+[NEW] Device C0:91:A1:F1:81:51 C0-91-A1-F1-81-51
+[NEW] Device C4:4F:9F:E9:FE:EF X5
+[NEW] Device 5B:6D:AC:2F:A6:83 5B-6D-AC-2F-A6-83
+[NEW] Device 69:41:AB:F6:78:F8 69-41-AB-F6-78-F8
+[NEW] Device 40:17:01:A9:F5:94 40-17-01-A9-F5-94</code></pre>
+<p>Entre altres, ens surt aquest anomenat X5 i com més endavant al resultat de la terminal ens deia que la seva senyal estava entre <b>-40 dBm i -55 dBm</b> significa que la senyal és excel·lent i molt forta (perquè estan un al costat de l'altre):</p>
+<pre><code>[CHG] Device C4:4F:9F:E9:FE:EF RSSI: 0xffffffd8 <b>(-40)</b>
+...
+[CHG] Device C4:4F:9F:E9:FE:EF RSSI: 0xffffffc9 <b>(-55)</b></code></pre>
+<p>Ho confirmo mirant des del mòbil, surt X5-4FC4. Així que sabem que la seva direcció MAC és: <code>C4:4F:9F:E9:FE:EF</code></p>
+<p>Activem la terminal <code>bluetoothctl</code> una altra vegada i mentre fem el <code>scan on</code>, escrivim:</p>
+<pre><code>[bluetoothctl]&gt; pair C4:4F:9F:E9:FE:EF
+[bluetoothctl]&gt; trust C4:4F:9F:E9:FE:EF</code></pre>
+<p>Però res funciona... intento desinstal·lar l'app del mòbil perquè la impressora l'oblidi, en cas de que només pugui connectar-se a un dispositiu, però encara res. Llavors caic en que l'app m'ha demanat permisos d'ubicació (a més del bluetooth), la qual cosa em sembla estranya.</p>
+<p>Investigant, aprenc que la impressora NK és un dispositiu purament <b>Bluetooth Low Energy (BLE).</b> Els dispositius BLE no es poden aparellar de la manera tradicional (pair) perquè no usen els perfils estàndard d'àudio o teclat. En canvi, transmeten dades directament a través de "característiques" mitjançant ordres GATT. Per això el Bluetooth clàssic de la Raspberry Pi et diu que no està disponible per a aparellament.</p>
+<p>Per verificar, utilitzem l'eina d'escaneig específica per dispositius Low Energy:</p>
+<pre><code><b>pi@raspberrypi:~ $ sudo hcitool lescan</b>
+LE Scan ...
+77:34:20:58:CF:C6 (unknown)
+8C:7A:3D:0E:C4:BD (unknown)
+8C:7A:3D:0E:C4:BD (unknown)
+C4:4F:9F:E9:FE:EF (unknown)
+C4:4F:9F:E9:FE:EF X5
+66:4E:B9:9C:9F:94 (unknown)
+66:4E:B9:9C:9F:94 (unknown)</code></pre>
+<p>I, efectivament, trobem el dispositiu X5 allà.</p>
+      </div>
+    </article>
+
+    <article class="day" id="dia-23-10">
+      <div class="day-date"><b>23/10</b><span>Dia 3</span></div>
+      <div class="day-body">
+        <h3>Connexió impressora</h3>
+<p>Avui hem rebut una nova càmera, la <b>Raspberry PI Camera</b>, però abans de configurar-la, continuem on ho vam deixar ahir, amb el tema del Bluetooth Low Energy.</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-23-01.webp" data-full="img/10-23-01.webp" width="700" height="394" alt="Mòdul Raspberry Pi Camera amb la cinta" loading="lazy" decoding="async"></button><figcaption>La nova Raspberry Pi Camera</figcaption></figure>
+        </div>
+<p>Aquestes mini impressores tèrmiques <b>BLE</b> no accepten text pla directament perquè la informació viatja empaquetada en ordres específiques de gràfics. Per poder comunicar-nos, utilitzarem un script de Python que cerca la característica d'escriptura de la impressora.</p>
+<p>Farem un test per imprimir alguna cosa des de la Raspberry. Així que primer instal·lem la llibreria:</p>
+<pre><code>pip install bleak --break-system-packages</code></pre>
+<p>I farem córrer un script de python anomenat <code title="Aquest fitxer no és a la carpeta Codis">test_impresora_v1.py</code> que busca de manera asíncrona els <i>Universally Unique Identifier</i> (UUID) de la impressora, és a dir, les direccions internes dels serveis que permet el dispositiu. I ens dona aquest resultat:</p>
+<pre><code><b>pi@raspberrypi:~ $ python test_impresora.py</b>
+Buscando y conectando a la impresora C4:4F:9F:E9:FE:EF...
+¡Conexión BLE establecida con éxito!
+
+--- Explorando Servicios y Características del dispositivo ---
+Característica encontrada: 0000ae3c-0000-1000-8000-00805f9b34fb | Propiedades: ['notify']
+Característica encontrada: 0000ae3b-0000-1000-8000-00805f9b34fb | Propiedades: ['write-without-response']
+Característica encontrada: 0000ae10-0000-1000-8000-00805f9b34fb | Propiedades: ['read', 'write']
+Característica encontrada: 0000ae04-0000-1000-8000-00805f9b34fb | Propiedades: ['notify']
+Característica encontrada: 0000ae01-0000-1000-8000-00805f9b34fb | Propiedades: ['write-without-response']
+Característica encontrada: 0000ae03-0000-1000-8000-00805f9b34fb | Propiedades: ['write-without-response']
+Característica encontrada: 0000ae05-0000-1000-8000-00805f9b34fb | Propiedades: ['indicate']
+Característica encontrada: 0000ae02-0000-1000-8000-00805f9b34fb | Propiedades: ['notify']
+Característica encontrada: 00002a00-0000-1000-8000-00805f9b34fb | Propiedades: ['read', 'write']
+
+Canal seleccionado para envío de datos: 0000ae3b-0000-1000-8000-00805f9b34fb
+Enviando texto de prueba...
+¡Datos enviados! Revisa si la impresora reaccionó.</code></pre>
+<p class="aside">*En el protocol de fabricació d'aquestes mini-impressores xineses, el canal ae01 és la "bústia de dades" del capçal tèrmic, mentre que els canals ae3b o ae03 se solen utilitzar per a configuracions de fàbrica, actualitzar el firmware o comprovar l'estat de la bateria.</p>
+<p>Per tant ara podem modificar l'script amb la nova informació trobada (<code title="Aquest fitxer no és a la carpeta Codis">test_impresora_v2.py</code>) però tampoc funciona. El que fem llavors és un debug amb l'ajuda de la IA que ens porta a:</p>
+<blockquote>
+<p>Aquí tienes el resumen de los pasos que hemos dado hasta ahora para descifrar tu impresora NK-FA3300:</p>
+<p><b>Paso 1:</b> El error de entorno: Comenzamos solucionando un bloqueo de seguridad en tu Raspberry Pi OS que te impedía instalar la librería Bluetooth bleak. Lo resolvimos aprendiendo a usar entornos virtuales de Python.</p>
+<p><b>Paso 2:</b> Localización del Hardware: Creamos un script para escanear tu impresora. Descubrimos su dirección MAC física (C4:4F:9F:E9:FE:EF) y mapeamos sus "oficinas" internas de comunicación (los canales o UUIDs de lectura y escritura).</p>
+<p><b>Paso 3:</b> La batalla de los protocolos: Intentamos comunicarnos con la impresora enviando texto plano y comandos estándar (ESC/POS). Como no reaccionaba, fuimos probando de forma avanzada diferentes estructuras binarias de fabricantes de AliExpress (protocolos de inicio 51 78 e iPrint, cálculos matemáticos de Checksum CRC8 y configuraciones de energía). La impresora enviaba los datos con éxito pero seguía muda.</p>
+<p><b>Paso 4:</b> El diagnóstico definitivo (Ingeniería Inversa): Nos diste el enlace de Amazon y la App oficial que usa (Tiny Print). Activaste el registro de desarrollo de Bluetooth en tu Galaxy A54 y capturaste el tráfico real de datos en el archivo btsnoop_hci.log.</p>
+<p><b>El descubrimiento:</b> Al leer tu archivo de captura, descubrimos el secreto: la impresora tiene un chip gráfico nativo de Gprinter. No entiende texto; solo entiende imágenes. El teléfono transforma cualquier letra en un mapa de bits (píxeles blancos y negros) y se los envía en ráfagas empaquetadas muy específicas.</p>
+<p>Gracias a ese archivo que extrajiste, dejamos de adivinar y pudimos escribir el último código, el cual emula milimétricamente el comportamiento de la aplicación de tu móvil.</p>
+</blockquote>
+<p>Ara pel proper pas necessitem instal·lar la llibreria de processament d'imatges de Python, Pillow.</p>
+<pre><code>pip install pillow --break-system-packages</code></pre>
+<p>I un parell de llibreries:</p>
+<pre><code>sudo apt update &amp;&amp; sudo apt install libopenjp2-7 libtiff6 -y</code></pre>
+<p>I encara segueix sense funcionar, així que continuem fent enginyeria inversa amb el log que hem tret del mòbil <b>btsnoop_hci.log</b>, escrivint un script de Python per treure el paquet binari exacte i complet que l'app Tiny Print injecta al principi de la comunicació (ho podem veure a <code title="Aquest fitxer no és a la carpeta Codis">extraer_exacto.py</code>) i ens surt això:</p>
+<pre><code><b>pi@raspberrypi:~ $ python extraer_exacto.py</b>
+Analizando btsnoop_hci.log en modo profundo... ¡¡PAQUETE DE CONTROL DETECTADO!! Tamaño del paquete: 123 bytes Primeros bytes (Hex): 5206005178A40001003399FF5178AF0002004C1DF4FF5178BE0001000309FF51
+
+Mensaje completo (Hex): 5206005178A40001003399FF5178AF0002004C1DF4FF5178BE0001000309FF5178BD0001001E5AFF5178A2003000005055555555555555555555555555555555555555555555555555555555555555555555555555555555555555550D00B0FF5178BF0005000CFFFFEA0C89FF5178BF0005000CFFFFEA0C89FF51</code></pre>
+<p>En desglossar el codi binari real, veiem la seqüència exacta de desbloqueig que exigeix la placa base:</p>
+<ol>
+<li><code>5178A4...</code> → Configura el capçal tèrmic.</li>
+<li><code>5178AF...</code> → Encén el mòdul d'energia del motor.</li>
+<li><code>5178BE...</code> → Desbloqueja la memòria intermèdia del microcontrolador.</li>
+<li><code>5178BD...</code> → Configura el gruix de línia.</li>
+<li><code>5178A2...</code> → L'ordre màgica d'impressió acompanyada d'un flux de píxels reals (50555555...).</li>
+</ol>
+<p>I ara, modificant l'script <code title="Aquest fitxer no és a la carpeta Codis">rodillo.py</code> per fi aconseguim que la impressora es mogui una mica. Després de moltes proves amb diferents codis i sense èxit, fins que arriba el Joan i acabem fent això:</p>
+<pre><code>  275  bluetoothctl list
+  276  bluetoothctl
+  277  sudo apt install python3-bleak
+  278  nano <a class="code-link-plain" href="codi.html#f-prova-ble-py">prova_ble.py</a>
+  279  python3 <b><a class="code-link-plain" href="codi.html#f-prova-ble-py">prova_ble.py</a></b>
+  280  nano <a class="code-link-plain" href="codi.html#f-prova-ble-lectura-test-1-py">prova_ble_lectura_test_1.py</a>
+  281  python <b><a class="code-link-plain" href="codi.html#f-prova-ble-lectura-test-1-py">prova_ble_lectura_test_1.py</a></b>
+  282  bluetoothctl info C4:4F:9F:E9:FE:EF
+  283  bluetoothctl
+  284  sudo apt install python3-pil
+  285  nano <a class="code-link-plain" href="codi.html#f-hola-print-test-py">hola_print_test.py</a>
+  286  python3 <b><a class="code-link-plain" href="codi.html#f-hola-print-test-py">hola_print_test.py</a></b>
+  287  history</code></pre>
+<p>Codis: <a class="code-link" href="codi.html#f-prova-ble-py"><code>prova_ble.py</code></a>, <a class="code-link" href="codi.html#f-prova-ble-lectura-test-1-py"><code>prova_ble_lectura_test_1.py</code></a>, <a class="code-link" href="codi.html#f-hola-print-test-py"><code>hola_print_test.py</code></a></p>
+<p>I per fi veiem que imprimeix:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-23-02.webp" data-full="img/10-23-02.webp" width="700" height="394" alt="Tira de paper amb el text HOLA RASPBERRY" loading="lazy" decoding="async"></button><figcaption>HOLA RASPBERRY!</figcaption></figure>
+        </div>
+      </div>
+    </article>
+
+    <article class="day" id="dia-26-10">
+      <div class="day-date"><b>26/10</b><span>Dia 4</span></div>
+      <div class="day-body">
+        <h3>Instal·lació càmera Pi</h3>
+<p>Avui el principal objectiu és entendre per què va funcionar l'altre dia la impressió de les paraules. Aquests són els passos que vam fer, des de l'inici:</p>
+<ol>
+<li><code>bluetoothctl list</code>: Verifica quins adaptadors o controladors Bluetooth físics té disponibles la Raspberry Pi.</li>
+<li><code>bluetoothctl</code>: Obre la consola interactiva integrada del sistema per cercar, aparellar i connectar dispositius Bluetooth.</li>
+<li><code>sudo apt install python3-bleak</code>: Instal·la Bleak, la llibreria de Python encarregada de gestionar les connexions Bluetooth Low Energy (BLE) de forma asíncrona.</li>
+<li><code>python3 <a class="code-link-plain" href="codi.html#f-prova-ble-py">prova_ble.py</a></code>: Vam crear i provar un script inicial per escanejar i llistar els serveis i les característiques internes de la impressora (el codi del fitxer <a class="code-link" href="codi.html#f-prova-ble-py"><code>prova_ble.py</code></a>). Amb això vam descobrir que la característica anomenada 0000ae01-... serveix per enviar-li dades.</li>
+<li><code>python <a class="code-link-plain" href="codi.html#f-prova-ble-lectura-test-1-py">prova_ble_lectura_test_1.py</a></code>: Vam dissenyar un script per llegir dades internes de la impressora (el fitxer <a class="code-link" href="codi.html#f-prova-ble-lectura-test-1-py"><code>prova_ble_lectura_test_1.py</code></a>).</li>
+<li><code>bluetoothctl info C4:4F:9F:E9:FE:EF</code>: Consulta l'estat actual de la impressora al sistema (si està aparellada, connectada o és de confiança).</li>
+<li><code>python3 <a class="code-link-plain" href="codi.html#f-prova-estat-impresora-py">prova_estat_impresora.py</a></code>: Quan executem aquest script d'estat (<a class="code-link" href="codi.html#f-prova-estat-impresora-py"><code>prova_estat_impresora.py</code></a>), la impressora torna una cadena de bytes: <code>51 78 a3 01 03 00 00 11 29 9d ff</code>. Si desglossem aquesta resposta segons el protocol, el byte 00 (o els bits interns) indiquen que la impressora reporta un estat correcte (té bateria, té paper i no està sobreescalfada). Això vol dir que la comunicació bidireccional funciona a la perfecció.</li>
+<li><code>sudo apt install python3-pil</code>: Instal·la Pillow (PIL), la llibreria de processament d'imatges de Python. És crucial perquè aquestes impressores no entenen text pla; entenen imatges formades per punts (píxels).</li>
+<li><code>python3 <a class="code-link-plain" href="codi.html#f-hola-print-test-py">hola_print_test.py</a></code>: El gran final. Vam crear l'script (<a class="code-link" href="codi.html#f-hola-print-test-py"><code>hola_print_test.py</code></a>) que va processar el missatge i va disparar mecànicament la impressió de "HOLA RASPBERRY".</li>
+</ol>
+<p>I ara, com volem imprimir una foto de prova (encara no presa des de la càmera de la Raspberry, sinó una que tenim a l'ordinador) modifiquem el codi <a class="code-link" href="codi.html#f-print-jpg-py"><code>print_jpg.py</code></a> i veiem que tot surt bé:</p>
+        <div class="photos">
+          <figure class="pol"><button type="button"><img src="img/mini/10-26-01.webp" data-full="img/10-26-01.webp" width="576" height="700" alt="Foto impresa en paper tèrmic sortint de la impressora" loading="lazy" decoding="async"></button><figcaption>Foto de prova impresa</figcaption></figure>
+        </div>
+<p>Així que el proper pas és connectar i instal·lar la Pi Camera. Apaguem la Raspberry i la connectem físicament:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-26-02.webp" data-full="img/10-26-02.webp" width="700" height="394" alt="Raspberry Pi amb la càmera connectada" loading="lazy" decoding="async"></button><figcaption>Pi Camera connectada</figcaption></figure>
+        </div>
+<p>Després instal·lem la llibreria necessària:</p>
+<pre><code>sudo apt install libcamera-apps -y</code></pre>
+<p>I provem de fer una foto amb el codi <a class="code-link" href="codi.html#f-tomar-foto-py"><code>tomar_foto.py</code></a>:</p>
+<pre><code>import subprocess
+import time
+
+print("Inicializando la Raspberry Pi Camera v1.3 (Entorno Bookworm)...")
+time.sleep(2)
+
+nombre_archivo = "mi_experimento.jpg"
+print(f"Tomando foto con rpicam-still y guardándola como '{nombre_archivo}'...")
+
+try:
+    # USAMOS EL NUEVO COMANDO OFICIAL: rpicam-still
+    # --immediate toma la foto al instante sin esperar previsualizaciones
+    subprocess.run(["rpicam-still", "-o", nombre_archivo, "--immediate"], check=True)
+    print("¡Listo! Foto guardada con éxito en esta carpeta.")
+except subprocess.CalledProcessError as e:
+    print(f"Error al intentar tomar la foto: {e}")
+except FileNotFoundError:
+    print("Error: No se encontró el comando 'rpicam-still'.")</code></pre>
+<p>Que acaba sortint de forma correcta, donant un .jpg amb resolució 2592 x 1944 píxels.</p>
+<p>I ara sí, connectem la Raspberry Pi Camera amb un nou codi de Python (<a class="code-link" href="codi.html#f-camara-instantanea-py"><code>camara_instantanea.py</code></a>) perquè imprimeixi la foto presa al moment, i per fi els dos estan connectats:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-26-03.webp" data-full="img/10-26-03.webp" width="700" height="394" alt="Foto feta amb la Pi Camera i impresa" loading="lazy" decoding="async"></button><figcaption>Càmera i impressora connectades</figcaption></figure>
+        </div>
+<p>Ara faltaria:</p>
+<ul>
+<li>Intentar imprimir en una resolució millor.</li>
+<li>Enviar la foto per Telegram a la vegada al meu mòbil.</li>
+<li>Connectar els botons d'encesa i de prendre foto.</li>
+<li>Afegir 3 leds d'estat.</li>
+<li>Connectar tot a la bateria externa.</li>
+</ul>
+<p>He fet una prova per connectar la Raspberry directament a la Powerbank (microUSB a USB) i no s'encén correctament. Investigant, veig que necessitaríem provar de USB-C a microUSB, perquè aquest té una gestió d'energia molt més estable i entrega els 3 Amperes, així que n'hem comprat un per Amazon.</p>
+        <div class="photos">
+          <figure class="pol"><button type="button"><img src="img/mini/10-26-04.webp" data-full="img/10-26-04.webp" width="700" height="700" alt="Cable USB-C a microUSB" loading="lazy" decoding="async"></button><figcaption>El cable USB-C a microUSB</figcaption></figure>
+        </div>
+      </div>
+    </article>
+
+    <article class="day" id="dia-27-10">
+      <div class="day-date"><b>27/10</b><span>Dia 5</span></div>
+      <div class="day-body">
+        <h3>Telegram i botons d&#x27;encesa i prendre foto</h3>
+<p>Per millorar la resolució de la imatge, imprimir en forma vertical (perquè la imatge sigui més gran i nítida) i guardar les fotos en una carpeta i noms d'arxiu amb datetime, hem canviat el codi a <a class="code-link" href="codi.html#f-camara-instantanea-final-py"><code>camara_instantanea_final.py</code></a></p>
+        <div class="photos">
+          <figure class="pol fit"><button type="button"><img src="img/mini/10-27-01.webp" data-full="img/10-27-01.webp" width="700" height="636" alt="Esquema dels passos del programa" loading="lazy" decoding="async"></button><figcaption>Els passos del programa</figcaption></figure>
+        </div>
+<h4>Connexió i enviament de foto a Telegram</h4>
+<p>Ara passem a la configuració de Telegram per poder enviar la foto al mòbil en color a la vegada que s'imprimeix en blanc i negre. Obrim <b>BotFather</b> i creem un nou bot:</p>
+        <div class="photos">
+          <figure class="pol"><button type="button"><img src="img/mini/10-27-02.webp" data-full="img/10-27-02.webp" width="639" height="700" alt="Conversa amb BotFather creant el bot Polaroid Pi" loading="lazy" decoding="async"></button><figcaption>Creant el bot amb BotFather</figcaption></figure>
+        </div>
+<p>BotFather ens dona un token (no el publiquem aquí perquè és la clau secreta del bot) i després busquem el bot @userinfobot per treure el nostre ID, i modifiquem el codi de manera que queda <a class="code-link" href="codi.html#f-camara-instantanea-telegram-py"><code>camara_instantanea_telegram.py</code></a>. Provem a fer una foto i funciona:</p>
+        <div class="photos">
+          <figure class="pol"><button type="button"><img src="img/mini/10-27-03.webp" data-full="img/10-27-03.webp" width="580" height="700" alt="Foto rebuda a Telegram amb la data" loading="lazy" decoding="async"></button><figcaption>La foto arriba al mòbil</figcaption></figure>
+        </div>
+<p>Una vegada solucionat això, passem a connectar els botons d'encesa de la raspberry i de prendre la foto. Comencem en aquest últim, ja que és el que té menys perill (l'altre si malfunciona pot apagar la Raspberry quan no toqui).</p>
+<h4>Botó de prendre foto</h4>
+<p>Per això agafem un botó i connectem un dels seus pins amb un cable F2F a <b>GPIO17</b> i l'altre a <b>GND</b>:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-27-04.webp" data-full="img/10-27-04.webp" width="700" height="394" alt="Botó connectat amb cables a la Raspberry" loading="lazy" decoding="async"></button><figcaption>Botó a GPIO17</figcaption></figure>
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-27-05.webp" data-full="img/10-27-05.webp" width="700" height="394" alt="Detall de la connexió del botó" loading="lazy" decoding="async"></button><figcaption>Detall de la connexió</figcaption></figure>
+        </div>
+<p>Fem un testeig del botó a nivell de software amb el codi <a class="code-link" href="codi.html#f-test-boto-py"><code>test_boto.py</code></a> i segons l'avís que ens mostra a la terminal funciona bé, així que modifiquem el nostre codi per afegir-lo (i de pas afegir un bucle infinit per poder prendre totes les fotos seguides que vulguem sense que el programa es pari) queda com a <a class="code-link" href="codi.html#f-camara-instantanea-telegram-boton-py"><code>camara_instantanea_telegram_boton.py</code></a></p>
+<h4>Botó d'encesa i apagada</h4>
+<p>Una vegada llest, anem amb l'altre botó: el d'encesa i apagada de la Raspberry. Connectem un dels cables a <b>GPIO3</b> i l'altre a <b>GND</b>:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-27-06.webp" data-full="img/10-27-06.webp" width="700" height="394" alt="Segon botó connectat a la Raspberry" loading="lazy" decoding="async"></button><figcaption>Botó a GPIO3</figcaption></figure>
+        </div>
+<p>El que farem per afegir una capa de seguretat és que el botó d'encesa i apagada s'hagi d'apretar durant uns 3-4 segons per ser efectiu.</p>
+<p>Anem a indicar-li al nucli de la Raspberry que pari atenció al pin GPIO 3 per a les tasques d'energia amb el codi <a class="code-link" href="codi.html#f-camera-boto-apagat-py"><code>camera_boto_apagat.py</code></a></p>
+        <div class="photos">
+          <figure class="pol wide fit"><button type="button"><img src="img/mini/10-27-07.webp" data-full="img/10-27-07.webp" width="537" height="266" alt="Terminal mostrant que s&#x27;ha detectat el botó d&#x27;apagada" loading="lazy" decoding="async"></button><figcaption>Apagada detectada</figcaption></figure>
+        </div>
+<p>Veiem que funciona correctament i, quan després apretem el botó una altra vegada, la Raspberry s'encén. Així que tot funciona bé (sempre i quan el nostre codi estigui corrent).</p>
+      </div>
+    </article>
+
+    <article class="day" id="dia-28-10">
+      <div class="day-date"><b>28/10</b><span>Dia 6</span></div>
+      <div class="day-body">
+        <h3>Soldadura de cables</h3>
+<p>Avui ha arribat el cable microUSB a USB-C i comprovem que, efectivament, aquest sí que serveix perquè la Raspberry tingui la suficient energia com per engegar-se i mantenir-se sense cap problema:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-28-01.webp" data-full="img/10-28-01.webp" width="700" height="394" alt="Raspberry alimentada amb la bateria externa" loading="lazy" decoding="async"></button><figcaption>Funcionant amb bateria</figcaption></figure>
+        </div>
+<p>Ara llavors ja no depenem d'una font d'energia connectada a la xarxa i el nostre prototip és "portàtil". L'únic que no estic segur és si el cable és massa curt (15 cm) però de moment ens arreglarem amb aquest.</p>
+<p>Després hem passat tot el matí soldant els botons als cables i a la placa. Mai havia soldat abans, així que he fet i desfet fins que ha sortit alguna cosa funcional:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-28-02.webp" data-full="img/10-28-02.webp" width="700" height="394" alt="Soldant a la taula de treball" loading="lazy" decoding="async"></button><figcaption>Soldant</figcaption></figure>
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-28-03.webp" data-full="img/10-28-03.webp" width="700" height="394" alt="Placa amb els botons soldats" loading="lazy" decoding="async"></button><figcaption>Botons a la placa</figcaption></figure>
+        </div>
+<p>Aquest ha sigut el resultat:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-28-04.webp" data-full="img/10-28-04.webp" width="700" height="394" alt="Resultat final de la soldadura connectat a la Raspberry" loading="lazy" decoding="async"></button><figcaption>El resultat</figcaption></figure>
+        </div>
+      </div>
+    </article>
+
+    <article class="day" id="dia-29-10">
+      <div class="day-date"><b>29/10</b><span>Dia 7</span></div>
+      <div class="day-body">
+        <h3>Auto-inici i carcassa de porexpan</h3>
+<p>Avui comencem el dia configurant l'auto-login per no haver de posar el password en encendre o apagar la Raspberry, ja que quan la càmera estigui llesta no tindrem una pantalla per posar-la.</p>
+<p>Executem <code>sudo raspi-config</code> i escollim l'opció S6 per l'auto-login:</p>
+        <div class="photos">
+          <figure class="pol wide fit"><button type="button"><img src="img/mini/10-29-01.webp" data-full="img/10-29-01.webp" width="666" height="418" alt="Menú de raspi-config" loading="lazy" decoding="async"></button><figcaption>raspi-config</figcaption></figure>
+        </div>
+<p>I per tancar sense contrasenya executem <code>sudo visudo -f /etc/sudoers.d/shutdown-nopasswd</code> i afegim aquesta línia:</p>
+<pre><code>%sudo ALL=(root) NOPASSWD: /usr/sbin/shutdown, /usr/sbin/reboot, /usr/sbin/poweroff</code></pre>
+<p>I guardem.</p>
+<p>Ara anem a configurar la Raspberry perquè faci córrer el codi (de moment l'última versió anomenada <a class="code-link" href="codi.html#f-polaroid-pi-v1-py"><code>polaroid_pi_v1.py</code></a>) quan s'encén de manera automàtica amb SystemD.</p>
+<p>Per això fem <code>sudo nano /etc/systemd/system/polaroid.service</code> i escrivim això a l'arxiu:</p>
+<pre><code>[Unit]
+Description=Servicio de Camara Instantanea Polaroid
+After=multi-user.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi
+ExecStart=/usr/bin/python3 /home/pi/<a class="code-link-plain" href="codi.html#f-polaroid-pi-v1-py">polaroid_pi_v1.py</a>
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+<p>Després activem i registrem el nou servei que hem creat:</p>
+<pre><code>sudo systemctl daemon-reload
+sudo systemctl enable polaroid.service</code></pre>
+<p>I provem, tot funciona correctament. En apretar el botó d'encesa durant 3 segons s'apaga la càmera i si després l'apretem una vegada s'encén i automàticament al cap de 30 segons (quan s'ha carregat el sistema operatiu) ja es poden prendre fotografies.</p>
+<h4>Crear el prototip de carcassa amb porexpan</h4>
+<p>Ara que ja tenim tot el material bàsic (menys el led RGB d'estat) vull fer un prototip de carcassa amb porexpan per verificar que tot funciona bé i que les connexions són les adequades.</p>
+<p>Primer tallem un tros que anirà a baix de tot, on posar la bateria, que és gran i pesada. Anirà connectada tant a la Raspberry com a la impressora, perquè cap de les dues es quedi sense energia i és fàcilment extraïble per un dels costats:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-29-02.webp" data-full="img/10-29-02.webp" width="700" height="394" alt="Base de porexpan amb la bateria" loading="lazy" decoding="async"></button><figcaption>La base amb la bateria</figcaption></figure>
+        </div>
+<p>Després afegim un segon pis, on aniran tant la impressora com la Raspberry:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-29-03.webp" data-full="img/10-29-03.webp" width="700" height="394" alt="Segon pis amb la impressora i la Raspberry" loading="lazy" decoding="async"></button><figcaption>El segon pis</figcaption></figure>
+        </div>
+<p>I muntem una a sobre de l'altra, fent foradets on faci falta passar cables per fora:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-29-04.webp" data-full="img/10-29-04.webp" width="700" height="394" alt="Els dos pisos muntats un sobre l&#x27;altre" loading="lazy" decoding="async"></button><figcaption>Els dos pisos muntats</figcaption></figure>
+        </div>
+<p>Per últim posem una "tapa" a sobre amb una ranura suficient perquè es puguin imprimir les fotos sense cap problema i on veiem el led d'estat de la impressora:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-29-05.webp" data-full="img/10-29-05.webp" width="700" height="394" alt="Tapa de porexpan amb la ranura per al paper" loading="lazy" decoding="async"></button><figcaption>La tapa amb la ranura</figcaption></figure>
+        </div>
+<p>Així queda vista per la part de davant:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-29-06.webp" data-full="img/10-29-06.webp" width="700" height="394" alt="Vista frontal del prototip de porexpan" loading="lazy" decoding="async"></button><figcaption>Vista de davant</figcaption></figure>
+        </div>
+<p>He fet una prova agafant la càmera i tot funciona correctament, el problema ara és que les fotos surten amb massa contrast i que he de calibrar d'alguna manera l'enfocament.</p>
+<p>Pel problema del contrast, canviem aquesta part del codi:</p>
+<pre><code>print("\n--------------------------------------------------")
+print("3. PROCESANDO IMAGEN...")
+print("--------------------------------------------------")
+
+imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+imagen_vertical = imagen_original.rotate(90, expand=True)
+
+ancho_fijo = 384
+alto_proporcional = int((imagen_vertical.height * ancho_fijo) / imagen_vertical.width)
+imagen_redimensionada = imagen_vertical.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+# AJUSTES OPTIMIZADOS PARA IMPRESORA TÉRMICA:
+# 1. Suavizamos el contraste (antes tenías 1.8, lo bajamos a un rango más natural)
+imagen_contrastada = ImageEnhance.Contrast(imagen_redimensionada).enhance(1.1)
+
+# 2. Subimos el brillo (antes tenías 0.95, lo subimos para aclarar las sombras)
+imagen_ajustada = ImageEnhance.Brightness(imagen_contrastada).enhance(1.3)
+
+# 3. Aplicamos un filtro de nitidez moderado
+imagen_nitida = imagen_ajustada.filter(ImageFilter.SHARPEN)
+
+# 4. CONVERSIÓN CON DITHERING (Floyd-Steinberg):
+# Al usar Image.DITHER.FLOYDSTEINBERG, creamos texturas de puntos que evitan los manchones negros
+imatge_final = imagen_nitida.convert("1", dither=Image.DITHER.FLOYDSTEINBERG)</code></pre>
+<p>I ens queda com a <a class="code-link" href="codi.html#f-polaroid-pi-v2-py"><code>polaroid_pi_v2.py</code></a></p>
+<div class="callout"><p class="label">Important!</p>
+<p>A partir d'ara, com hem canviat el codi, també hem de canviar <code>sudo nano /etc/systemd/system/polaroid.service</code> i posar el nou nom d'arxiu i després fer:</p></div>
+<pre><code>sudo systemctl daemon-reload
+sudo systemctl restart polaroid.service</code></pre>
+<p>per reiniciar el servei.</p>
+<p>Ara m'agradaria fer test amb l'enfocament per saber on posar-hi exactament l'objectiu de la càmera a la carcassa, així que creo un nou script anomenat <a class="code-link" href="codi.html#f-test-enfoque-py"><code>test_enfoque.py</code></a> que només envia la foto al Telegram i no toca la impressora.</p>
+      </div>
+    </article>
+
+    <article class="day" id="dia-30-10">
+      <div class="day-date"><b>30/10</b><span>Dia 8</span></div>
+      <div class="day-body">
+        <h3>Prototip OK i disseny 3D amb Autodesk</h3>
+<p>Avui he acabat de muntar el primer prototip i he canviat una mica el codi (<a class="code-link" href="codi.html#f-polaroid-pi-v3-py"><code>polaroid_pi_v3.py</code></a>) perquè la foto s'enviï per Telegram encara que la impressora no estigui operativa.</p>
+<p>He d'enrecordar-me cada vegada que faig canvis al codi de fer:</p>
+<pre><code>sudo systemctl daemon-reload
+sudo systemctl restart polaroid.service</code></pre>
+<p>Després he fet unes quantes proves i tot bé:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-30-01.webp" data-full="img/10-30-01.webp" width="700" height="394" alt="Prototip de porexpan durant les proves" loading="lazy" decoding="async"></button><figcaption>Proves amb el prototip</figcaption></figure>
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-30-02.webp" data-full="img/10-30-02.webp" width="700" height="394" alt="Prototip amb la càmera muntada al davant" loading="lazy" decoding="async"></button><figcaption>El prototip</figcaption></figure>
+        </div>
+<p>Així que hem passat la resta del matí amb el Joan dissenyant la carcassa al programa <b>Autodesk Fusion</b> per poder imprimir-la en 3D.</p>
+<p>Aquests són els esbossos de càlcul de distàncies:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/10-30-03.webp" data-full="img/10-30-03.webp" width="700" height="394" alt="Esbossos a llibreta amb mesures de la carcassa" loading="lazy" decoding="async"></button><figcaption>Esbossos de distàncies</figcaption></figure>
+        </div>
+<p>Pendent:</p>
+<ul><li>Afegir led RGB d'estat.</li><li>Impressió 3D de la carcassa.</li></ul>
+      </div>
+    </article>
+
+    <article class="day" id="dia-02-11">
+      <div class="day-date"><b>02/11</b><span>Dia 9</span></div>
+      <div class="day-body">
+        <h3>Adaptació de la caixa 3D</h3>
+<p>Avui ha arribat la primera versió de la impressió 3D de la carcassa. A primera vista sembla que tot bé:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/11-02-01.webp" data-full="img/11-02-01.webp" width="700" height="394" alt="Peces impreses en 3D en verd i lila" loading="lazy" decoding="async"></button><figcaption>La caixa impresa en 3D</figcaption></figure>
+          <figure class="pol wide"><button type="button"><img src="img/mini/11-02-02.webp" data-full="img/11-02-02.webp" width="700" height="394" alt="Impressora i Raspberry dins la caixa verda" loading="lazy" decoding="async"></button><figcaption>Tot a dins</figcaption></figure>
+        </div>
+<p>Però en intentar connectar-ho tot trobo els primers problemes de disseny.</p>
+<p>El primer problema és que no vaig tenir en compte la mida de la capçalera del connector microUSB i no cap pel foradet:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/11-02-03.webp" data-full="img/11-02-03.webp" width="700" height="394" alt="Connector microUSB que no cap pel forat" loading="lazy" decoding="async"></button><figcaption>El microUSB no hi cap</figcaption></figure>
+        </div>
+<p>I el segon problema és que no vaig calcular bé la distància del connector de la impressora i per tant el cable tampoc es pot connectar:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/11-02-04.webp" data-full="img/11-02-04.webp" width="700" height="394" alt="Connector de la impressora mal alineat" loading="lazy" decoding="async"></button><figcaption>El connector de la impressora</figcaption></figure>
+        </div>
+<p>Així que s'haurà de modificar una mica la caixa perquè hi càpiguen.</p>
+<p>Primer creiem que s'hauria de llimar la caixa d'alguna manera, però després hem descobert que es pot "soldar" la caixa per fondre el material, així que ho hem provat:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/11-02-05.webp" data-full="img/11-02-05.webp" width="700" height="394" alt="Fonent el plàstic de la caixa amb el soldador" loading="lazy" decoding="async"></button><figcaption>&quot;Soldant&quot; la caixa</figcaption></figure>
+        </div>
+<p>I ha quedat prou bé, donades les circumstàncies:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/11-02-06.webp" data-full="img/11-02-06.webp" width="700" height="394" alt="Forat ampliat a la caixa verda" loading="lazy" decoding="async"></button><figcaption>Forat ampliat</figcaption></figure>
+          <figure class="pol wide"><button type="button"><img src="img/mini/11-02-07.webp" data-full="img/11-02-07.webp" width="700" height="394" alt="Un altre forat ampliat a la caixa" loading="lazy" decoding="async"></button><figcaption>Ara sí que hi cap</figcaption></figure>
+        </div>
+<p>Ara passem a dissenyar la tapa que estarà a sobre, amb un forat a la zona esquerra per poder imprimir les fotos i amb un visor on col·locar la càmera:</p>
+        <div class="photos">
+          <figure class="pol"><button type="button"><img src="img/mini/11-02-08.webp" data-full="img/11-02-08.webp" width="394" height="700" alt="Esbós de la tapa amb el visor" loading="lazy" decoding="async"></button><figcaption>Esbós de la tapa</figcaption></figure>
+        </div>
+      </div>
+    </article>
+
+    <article class="day" id="dia-03-11">
+      <div class="day-date"><b>03/11</b><span>Dia 10</span></div>
+      <div class="day-body">
+        <h3>Aprenent Autodesk Fusion</h3>
+<p>Avui hem de dissenyar la tapa de la càmera amb Autodesk Fusion. Intento descarregar la versió gratuïta per aprendre a utilitzar el programa jo mateix.</p>
+<p>Primer fent el pla:</p>
+        <div class="photos">
+          <figure class="pol wide fit"><button type="button"><img src="img/mini/11-03-01.webp" data-full="img/11-03-01.webp" width="700" height="423" alt="Croquis de la tapa a Autodesk Fusion" loading="lazy" decoding="async"></button><figcaption>El pla</figcaption></figure>
+        </div>
+<p>I al cap d'un parell d'hores d'aprenentatge, he pogut completar la tapa:</p>
+        <div class="photos">
+          <figure class="pol wide fit"><button type="button"><img src="img/mini/11-03-02.webp" data-full="img/11-03-02.webp" width="700" height="361" alt="Model 3D de la tapa acabada" loading="lazy" decoding="async"></button><figcaption>La tapa acabada</figcaption></figure>
+        </div>
+<p>Encara falta la tapeta del visor, que la faré a part.</p>
+<p>Mesurem les distàncies:</p>
+        <div class="photos">
+          <figure class="pol wide"><button type="button"><img src="img/mini/11-03-03.webp" data-full="img/11-03-03.webp" width="700" height="394" alt="Esbós amb mesures del visor i un regle" loading="lazy" decoding="async"></button><figcaption>Mesures del visor</figcaption></figure>
+        </div>
+<p>I comencem a dissenyar amb Autodesk, de moment deixant-lo a mitges per demà:</p>
+        <div class="photos">
+          <figure class="pol wide fit"><button type="button"><img src="img/mini/11-03-04.webp" data-full="img/11-03-04.webp" width="700" height="342" alt="Model 3D del visor a mig fer" loading="lazy" decoding="async"></button><figcaption>Visor a mitges</figcaption></figure>
+        </div>
+      </div>
+    </article>
+
+    <article class="day" id="dia-04-11">
+      <div class="day-date"><b>04/11</b><span>Dia 11</span></div>
+      <div class="day-body">
+        <h3>Disseny peces Autodesk</h3>
+<p>Avui continuem dissenyant la tapa del visor amb Autodesk Fusion i l'acabem:</p>
+        <div class="photos">
+          <figure class="pol wide fit"><button type="button"><img src="img/mini/11-04-01.webp" data-full="img/11-04-01.webp" width="700" height="375" alt="Model 3D de la tapa del visor" loading="lazy" decoding="async"></button><figcaption>Tapa del visor</figcaption></figure>
+        </div>
+<p>I fem la base de la caixeta per posar-hi els botons:</p>
+        <div class="photos">
+          <figure class="pol wide fit"><button type="button"><img src="img/mini/11-04-02.webp" data-full="img/11-04-02.webp" width="700" height="374" alt="Model 3D de la base de la caixeta dels botons" loading="lazy" decoding="async"></button><figcaption>Base de la caixeta</figcaption></figure>
+        </div>
+<p>També la seva tapa:</p>
+        <div class="photos">
+          <figure class="pol wide fit"><button type="button"><img src="img/mini/11-04-03.webp" data-full="img/11-04-03.webp" width="700" height="372" alt="Model 3D de la tapa de la caixeta" loading="lazy" decoding="async"></button><figcaption>Tapa de la caixeta</figcaption></figure>
+        </div>
+<p>I els botons:</p>
+        <div class="photos">
+          <figure class="pol wide fit"><button type="button"><img src="img/mini/11-04-04.webp" data-full="img/11-04-04.webp" width="700" height="394" alt="Model 3D d&#x27;un botó" loading="lazy" decoding="async"></button><figcaption>Els botons</figcaption></figure>
+        </div>
+      </div>
+    </article>
+    <!-- DIARI:FI -->
+
+
+
+
+
+
+    </div>
+    </div>
+  </section>
+
+  <!-- CODI:INICI -->
+  <section id="codi">
+    <div class="sec-head">
+      <p class="label">Codi</p>
+      <h2>Tots els scripts</h2>
+      <p>Els 21 programes en Python del projecte, en l'ordre en què els vam fer. Cada un s'obre a la <a href="codi.html">pàgina de codi</a>.</p>
+    </div>
+    <div class="code-index">
+      <div><h3>Bluetooth i impressora</h3><ul><li><a class="code-link" href="codi.html#f-prova-ble-py"><code>prova_ble.py</code></a></li><li><a class="code-link" href="codi.html#f-prova-ble-lectura-test-1-py"><code>prova_ble_lectura_test_1.py</code></a></li><li><a class="code-link" href="codi.html#f-hola-print-test-py"><code>hola_print_test.py</code></a></li><li><a class="code-link" href="codi.html#f-prova-estat-impresora-py"><code>prova_estat_impresora.py</code></a></li><li><a class="code-link" href="codi.html#f-ibm-quote-py"><code>ibm_quote.py</code></a></li><li><a class="code-link" href="codi.html#f-gates-jobs-image-print-py"><code>gates_jobs_image_print.py</code></a></li><li><a class="code-link" href="codi.html#f-print-jpg-py"><code>print_jpg.py</code></a></li></ul></div>
+      <div><h3>Càmera</h3><ul><li><a class="code-link" href="codi.html#f-tomar-foto-py"><code>tomar_foto.py</code></a></li><li><a class="code-link" href="codi.html#f-camara-instantanea-py"><code>camara_instantanea.py</code></a></li><li><a class="code-link" href="codi.html#f-camara-instantanea-pro-py"><code>camara_instantanea_pro.py</code></a></li><li><a class="code-link" href="codi.html#f-camara-instantanea-vertical-py"><code>camara_instantanea_vertical.py</code></a></li><li><a class="code-link" href="codi.html#f-camara-instantanea-final-py"><code>camara_instantanea_final.py</code></a></li></ul></div>
+      <div><h3>Telegram i botons</h3><ul><li><a class="code-link" href="codi.html#f-camara-instantanea-telegram-py"><code>camara_instantanea_telegram.py</code></a></li><li><a class="code-link" href="codi.html#f-test-boto-py"><code>test_boto.py</code></a></li><li><a class="code-link" href="codi.html#f-camara-instantanea-telegram-boton-py"><code>camara_instantanea_telegram_boton.py</code></a></li><li><a class="code-link" href="codi.html#f-camera-boto-apagat-py"><code>camera_boto_apagat.py</code></a></li><li><a class="code-link" href="codi.html#f-camera-pi-v1-py"><code>camera_pi_v1.py</code></a></li></ul></div>
+      <div><h3>Programa principal</h3><ul><li><a class="code-link" href="codi.html#f-polaroid-pi-v1-py"><code>polaroid_pi_v1.py</code></a></li><li><a class="code-link" href="codi.html#f-polaroid-pi-v2-py"><code>polaroid_pi_v2.py</code></a></li><li><a class="code-link" href="codi.html#f-test-enfoque-py"><code>test_enfoque.py</code></a></li><li><a class="code-link" href="codi.html#f-polaroid-pi-v3-py"><code>polaroid_pi_v3.py</code></a></li></ul></div>
+    </div>
+  </section>
+  <!-- CODI:FI -->
+
+  <section id="licions">
+    <div class="sec-head">
+      <p class="label">Lliçons apreses</p>
+      <h2>El que no sortia a cap tutorial</h2>
+    </div>
+    <div class="lessons">
+      <div class="lesson"><h3>BLE no és Bluetooth clàssic</h3><p>La impressora no s'aparella amb <code>pair</code>. Es parla directament amb les seves característiques GATT, amb <code>bleak</code> des de Python.</p></div>
+      <div class="lesson"><h3>Copiar l'app oficial</h3><p>Capturar el tràfic Bluetooth del mòbil va revelar el protocol exacte de la impressora. Endevinar ordres no funcionava.</p></div>
+      <div class="lesson"><h3>L'alimentació importa</h3><p>Amb el cable microUSB la Raspberry no arrencava bé. Amb USB-C a microUSB rep prou corrent.</p></div>
+      <div class="lesson"><h3>Primer porexpan, després 3D</h3><p>El prototip barat va servir per provar la distribució. Tot i així, cal mesurar els connectors amb el cable posat.</p></div>
+      <div class="lesson"><h3>Menys contrast, més punts</h3><p>El paper tèrmic només té blanc i negre. El tramat Floyd–Steinberg i una mica més de brillantor donen fotos molt més llegibles.</p></div>
+      <div class="lesson"><h3>Pensar sense pantalla</h3><p>Inici automàtic, systemd i apagada amb botó: la càmera ha de funcionar sense teclat ni monitor.</p></div>
+    </div>
+  </section>
+
+  <section id="agraiments">
+    <div class="thanks">
+      <div class="thanks-text">
+        <p class="label">Agraïments</p>
+        <h2>Gràcies</h2>
+        <p>Al professor <b>Joan Masdemont</b>, per acompanyar-nos durant tot el projecte: des del dia que la impressora per fi va imprimir «HOLA RASPBERRY» fins al disseny de la carcassa amb Autodesk Fusion.</p>
+        <p>I a <b>tots els companys i companyes de classe</b> del curs d'IoT del CIFO La Violeta, per les idees, les proves compartides i l'ajuda de cada dia.</p>
+      </div>
+      <div class="thanks-logo">
+        <img src="img/cifo-la-violeta.webp" width="320" height="320" alt="Logotip del CIFO Barcelona La Violeta" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <span>Polaroid Pi · Projecte IOT CIFO La Violeta 2026</span>
+  <span>Fet amb una Raspberry Pi, paper tèrmic i moltes proves</span>
+</footer>
+
+<a class="btn to-top" href="#inici" id="amunt" aria-label="Tornar a dalt de tot">↑ Amunt</a>
+
+<dialog id="visor" aria-label="Foto ampliada">
+  <button type="button" id="tancar" aria-label="Tancar">×</button>
+  <img id="visor-img" src="" alt="">
+  <p id="visor-text"></p>
+</dialog>
+
+<script>
+(function () {
+  // Alçada real del menú fix, perquè l'índex del diari i els enllaços quedin just a sota
+  var h = document.querySelector('.top');
+  function set() { document.documentElement.style.setProperty('--head-h', h.offsetHeight + 'px'); }
+  set(); window.addEventListener('resize', set);
+})();
+</script>
+<script>
+(function () {
+  // Botó per pujar: apareix quan has baixat una mica
+  var up = document.getElementById('amunt');
+  function onScroll() { up.classList.toggle('visible', window.scrollY > 700); }
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  // "Amunt" i el logo: pugen a dalt de tot (el menú és fix, per això no n'hi ha prou amb l'enllaç #inici)
+  var suau = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('a[href="#inici"]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: suau ? 'smooth' : 'auto' });
+      var primer = document.querySelector('.brand'); if (primer) primer.focus({ preventScroll: true });
+    });
+  });
+
+  // Índex de dies: marca el dia que s'està llegint
+  var nav = document.querySelector('.day-nav');
+  if (!nav || !('IntersectionObserver' in window)) return;
+  var links = {}; nav.querySelectorAll('a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  var current = null;
+  function setCurrent(id) {
+    if (id === current || !links[id]) return;
+    if (current && links[current]) links[current].removeAttribute('aria-current');
+    links[id].setAttribute('aria-current', 'true'); current = id;
+    var ol = nav.querySelector('ol'), a = links[id];
+    if (ol.scrollWidth > ol.clientWidth) ol.scrollLeft = a.offsetLeft - ol.clientWidth / 2 + a.offsetWidth / 2;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) setCurrent(e.target.id); });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  document.querySelectorAll('.day').forEach(function (d) { io.observe(d); });
+})();
+</script>
+<script>
+(function () {
+  var d = document.getElementById('visor');
+  var img = document.getElementById('visor-img');
+  var txt = document.getElementById('visor-text');
+  document.querySelectorAll('.pol button, .schematic .zoom').forEach(function (b) {
+    if (!b.hasAttribute('aria-label')) b.setAttribute('aria-label', 'Amplia la foto');
+    b.addEventListener('click', function () {
+      var i = b.querySelector('img');
+      var cap = b.parentElement.querySelector('figcaption');
+      img.src = i.getAttribute('data-full') || i.src; img.alt = i.alt;
+      txt.textContent = cap ? cap.textContent : '';
+      if (d.showModal) d.showModal();
+    });
+  });
+  document.getElementById('tancar').addEventListener('click', function () { d.close(); });
+  d.addEventListener('click', function (e) { if (e.target === d) d.close(); });
+})();
+</script>
+</body>
+</html>

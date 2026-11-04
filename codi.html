@@ -1,0 +1,2923 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Polaroid Pi · Codi</title>
+<meta name="description" content="Tots els scripts en Python del projecte Polaroid Pi.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: same notebook paper as the home page; a contents grid, then one block per script */
+:root {
+  --paper: #f2f3f0; --ink: #1c2130; --muted: #5b6270; --rule: #d5d8d1; --raspberry: #b3174a;
+  --code-bg: #e8eae5; --c-kw: #8a1640; --c-str: #2f6b3a; --c-com: #7b818c; --c-num: #9a5b00; --c-fn: #224f9c;
+  --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #14161a; --ink: #e6e7e3; --muted: #9ba1ab; --rule: #2b2f36; --raspberry: #f0587f;
+    --code-bg: #1d2026; --c-kw: #f58aa8; --c-str: #9ad3a1; --c-com: #7d8490; --c-num: #f0b866; --c-fn: #8fb6f5; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #14161a; --ink: #e6e7e3; --muted: #9ba1ab; --rule: #2b2f36; --raspberry: #f0587f;
+  --code-bg: #1d2026; --c-kw: #f58aa8; --c-str: #9ad3a1; --c-com: #7d8490; --c-num: #f0b866; --c-fn: #8fb6f5; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a { color: var(--raspberry); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 3px; }
+code { font-family: var(--mono); font-size: .9em; }
+.wrap { max-width: 1080px; margin: 0 auto; }
+.top {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding-block: 14px; border-bottom: 1px solid var(--rule);
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--paper);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 31; background: var(--paper); }
+:root { --head-h: 70px; }
+html { scroll-padding-top: calc(var(--head-h) + 16px); }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 500 .78rem/1 var(--mono); text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink); text-decoration: none; background: var(--paper);
+  padding: 9px 12px 8px; border: 1.5px solid var(--ink); border-bottom-width: 4px; border-radius: 6px;
+  transition: transform .08s ease, background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.btn:hover { background: var(--raspberry); border-color: var(--raspberry); color: var(--paper); }
+.btn:active { transform: translateY(2px); border-bottom-width: 2px; margin-bottom: 2px; }
+.btn:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 3px; }
+.btn.primary { background: var(--raspberry); border-color: var(--raspberry); color: var(--paper); }
+.btn.primary:hover { background: var(--ink); border-color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:active { transform: none; } }
+.label { font: 500 .75rem/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 0; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; margin: 0; text-wrap: balance; }
+.intro { padding-block: 48px 32px; display: grid; gap: 14px; max-width: 64ch; }
+.intro h1 { font-size: clamp(2.6rem, 7vw, 4.2rem); font-weight: 800; letter-spacing: -.04em; }
+.intro p { margin: 0; color: var(--muted); }
+.note { border-left: 3px solid var(--raspberry); padding: 4px 0 4px 16px; font-size: .95rem; }
+.toc { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; padding-block: 24px 40px; border-bottom: 1px solid var(--rule); }
+.toc h3 { font-size: 1rem; margin-bottom: 8px; }
+.toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.toc a { text-decoration: none; }
+.toc a code { color: var(--raspberry); font-size: .82rem; overflow-wrap: anywhere; }
+.toc a:hover code { text-decoration: underline; }
+h2.group { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; letter-spacing: -.02em; padding-top: 56px; }
+.file { padding-block: 28px; border-bottom: 1px dashed var(--rule); display: grid; gap: 12px; }
+.file header { display: grid; gap: 4px; }
+.file h3 code { font-size: 1.25rem; font-weight: 500; overflow-wrap: anywhere; }
+.file .desc { margin: 0; }
+.file .meta { margin: 0; font: 400 .82rem/1.4 var(--mono); color: var(--muted); }
+.file:target h3 code { color: var(--raspberry); }
+pre { margin: 0; background: var(--code-bg); border-radius: 4px; padding: 16px; overflow: auto; max-height: 34rem; font-size: .8rem; line-height: 1.55; tab-size: 4; }
+pre code { font-size: inherit; }
+.hljs-keyword, .hljs-built_in, .hljs-literal { color: var(--c-kw); }
+.hljs-string, .hljs-subst { color: var(--c-str); }
+.hljs-comment { color: var(--c-com); font-style: italic; }
+.hljs-number { color: var(--c-num); }
+.hljs-title, .hljs-title.function_ { color: var(--c-fn); }
+footer { padding-block: 32px 48px; color: var(--muted); font-size: .9rem; }
+@media (max-width: 860px) { .toc { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .toc { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  .top { flex-wrap: nowrap; gap: 12px; }
+  .top nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; padding-block: 2px 4px; scrollbar-width: none; }
+  .top nav::-webkit-scrollbar { display: none; }
+  .top .btn { flex: none; }
+}
+.stripe { display: inline-flex; height: 18px; border-radius: 3px; overflow: hidden; flex: none; }
+.stripe i { width: 5px; }
+.stripe i:nth-child(1) { background: #d6453d; } .stripe i:nth-child(2) { background: #ee8a2f; }
+.stripe i:nth-child(3) { background: #f1c232; } .stripe i:nth-child(4) { background: #4f9f68; }
+.stripe i:nth-child(5) { background: #2f78c0; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 800 1.1rem/1 var(--display); letter-spacing: -.01em; flex: none; }
+.brand:hover { color: var(--raspberry); }
+.brand:focus-visible { outline: 2px solid var(--raspberry); outline-offset: 4px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<header class="top wrap">
+  <a class="brand" href="index.html"><span class="stripe" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>Polaroid Pi</a>
+  <a class="btn" href="index.html">← Tornar al projecte</a>
+</header>
+<main class="wrap">
+  <div class="intro">
+    <p class="label">Codi</p>
+    <h1>Scripts en Python</h1>
+    <p>Els 21 programes del projecte, en l'ordre en què els vam escriure. Cada un enllaça al dia del diari on surt.</p>
+    <p class="note">El token del bot de Telegram i l'ID del xat s'han tret de tots els scripts. Per fer-los funcionar, posa-hi els teus a <code>POSA_AQUI_EL_TOKEN_DEL_BOT</code> i <code>POSA_AQUI_EL_TEU_CHAT_ID</code>. No conservem aquests scripts de les proves del 23/10: <code>test_impresora_v1.py</code>, <code>test_impresora_v2.py</code>, <code>extraer_exacto.py</code>, <code>rodillo.py</code>.</p>
+  </div>
+  <nav class="toc" aria-label="Índex de scripts">
+<div class="toc-group"><h3>Bluetooth i impressora</h3><ul><li><a href="#f-prova-ble-py"><code>prova_ble.py</code></a></li><li><a href="#f-prova-ble-lectura-test-1-py"><code>prova_ble_lectura_test_1.py</code></a></li><li><a href="#f-hola-print-test-py"><code>hola_print_test.py</code></a></li><li><a href="#f-prova-estat-impresora-py"><code>prova_estat_impresora.py</code></a></li><li><a href="#f-ibm-quote-py"><code>ibm_quote.py</code></a></li><li><a href="#f-gates-jobs-image-print-py"><code>gates_jobs_image_print.py</code></a></li><li><a href="#f-print-jpg-py"><code>print_jpg.py</code></a></li></ul></div>
+<div class="toc-group"><h3>Càmera</h3><ul><li><a href="#f-tomar-foto-py"><code>tomar_foto.py</code></a></li><li><a href="#f-camara-instantanea-py"><code>camara_instantanea.py</code></a></li><li><a href="#f-camara-instantanea-pro-py"><code>camara_instantanea_pro.py</code></a></li><li><a href="#f-camara-instantanea-vertical-py"><code>camara_instantanea_vertical.py</code></a></li><li><a href="#f-camara-instantanea-final-py"><code>camara_instantanea_final.py</code></a></li></ul></div>
+<div class="toc-group"><h3>Telegram i botons</h3><ul><li><a href="#f-camara-instantanea-telegram-py"><code>camara_instantanea_telegram.py</code></a></li><li><a href="#f-test-boto-py"><code>test_boto.py</code></a></li><li><a href="#f-camara-instantanea-telegram-boton-py"><code>camara_instantanea_telegram_boton.py</code></a></li><li><a href="#f-camera-boto-apagat-py"><code>camera_boto_apagat.py</code></a></li><li><a href="#f-camera-pi-v1-py"><code>camera_pi_v1.py</code></a></li></ul></div>
+<div class="toc-group"><h3>Programa principal</h3><ul><li><a href="#f-polaroid-pi-v1-py"><code>polaroid_pi_v1.py</code></a></li><li><a href="#f-polaroid-pi-v2-py"><code>polaroid_pi_v2.py</code></a></li><li><a href="#f-test-enfoque-py"><code>test_enfoque.py</code></a></li><li><a href="#f-polaroid-pi-v3-py"><code>polaroid_pi_v3.py</code></a></li></ul></div>
+  </nav>
+<h2 class="group">Bluetooth i impressora</h2>
+<article class="file" id="f-prova-ble-py">
+  <header><h3><code>prova_ble.py</code></h3>
+  <p class="desc">Es connecta a la impressora i llista tots els seus serveis i característiques BLE.</p>
+  <p class="meta"><a href="index.html#dia-23-10">Diari 23/10</a> · 18 línies · <a href="codi/prova_ble.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+from bleak import BleakClient
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+
+async def main():
+    async with BleakClient(MAC, timeout=20) as client:
+        print(&quot;Connectat:&quot;, client.is_connected)
+
+        for service in client.services:
+            print(&quot;Servei:&quot;, service.uuid)
+
+            for char in service.characteristics:
+                print(&quot;  Característica:&quot;, char.uuid)
+                print(&quot;  Propietats:&quot;, char.properties)
+
+asyncio.run(main())
+</code></pre>
+</article>
+<article class="file" id="f-prova-ble-lectura-test-1-py">
+  <header><h3><code>prova_ble_lectura_test_1.py</code></h3>
+  <p class="desc">Llegeix les dades internes de la característica ae10.</p>
+  <p class="meta"><a href="index.html#dia-23-10">Diari 23/10</a> · 17 línies · <a href="codi/prova_ble_lectura_test_1.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+from bleak import BleakClient
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+UUID = &quot;0000ae10-0000-1000-8000-00805f9b34fb&quot;
+
+async def main():
+    async with BleakClient(MAC) as client:
+        print(&quot;Connectat:&quot;, client.is_connected)
+
+        dades = await client.read_gatt_char(UUID)
+
+        print(&quot;Dades:&quot;, dades.hex(&quot; &quot;))
+        print(&quot;Bytes:&quot;, list(dades))
+
+asyncio.run(main())
+</code></pre>
+</article>
+<article class="file" id="f-hola-print-test-py">
+  <header><h3><code>hola_print_test.py</code></h3>
+  <p class="desc">La primera impressió que va funcionar: dibuixa «HOLA RASPBERRY» i l&#x27;envia fila a fila.</p>
+  <p class="meta"><a href="index.html#dia-23-10">Diari 23/10</a> · 75 línies · <a href="codi/hola_print_test.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+from bleak import BleakClient
+from PIL import Image, ImageDraw, ImageFont
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+
+# CRC8 del protocol Tiny Print
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+# Generar la imatge del text
+imatge = Image.new(&quot;1&quot;, (384, 90), 1)
+draw = ImageDraw.Draw(imatge)
+
+font = ImageFont.truetype(
+    &quot;/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf&quot;,
+    27
+)
+
+draw.text((20, 25), &quot;HOLA RASPBERRY&quot;, font=font, fill=0)
+
+# Convertir cada fila en 48 bytes
+def convertir_fila(y):
+    dades = bytearray(48)
+
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+
+    return bytes(dades) 
+
+async def main():
+    async with BleakClient(MAC, timeout=20) as client:
+        print(&quot;Connectat:&quot;, client.is_connected)
+
+        async def enviar(cmd, dades):
+            await client.write_gatt_char(
+                AE01,
+                paquet(cmd, dades),
+                response=False
+            )
+            await asyncio.sleep(0.04)
+
+        # Configurar el mode text
+        await enviar(0xBE, b&quot;\x01&quot;)
+
+        # Imprimir les files de la imatge
+        for y in range(imatge.height):
+            await enviar(0xA2, convertir_fila(y))
+
+        # Avançar una mica el paper
+        await enviar(0xA1, bytes([40, 0]))
+
+        print(&quot;Ordres d&#x27;impressió enviades&quot;)
+
+asyncio.run(main())
+</code></pre>
+</article>
+<article class="file" id="f-prova-estat-impresora-py">
+  <header><h3><code>prova_estat_impresora.py</code></h3>
+  <p class="desc">Demana l&#x27;estat a la impressora (ordre A3) i mostra la resposta.</p>
+  <p class="meta"><a href="index.html#dia-26-10">Diari 26/10</a> · 39 línies · <a href="codi/prova_estat_impresora.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+from bleak import BleakClient
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+AE02 = &quot;0000ae02-0000-1000-8000-00805f9b34fb&quot;
+
+def resposta(sender, data):
+    print(&quot;Resposta BLE:&quot;, data.hex(&quot; &quot;))
+
+async def main():
+    async with BleakClient(MAC, timeout=20) as client:
+
+        print(&quot;Connectat:&quot;, client.is_connected)
+
+        await client.start_notify(AE02, resposta)
+        print(&quot;Notificacions activades&quot;)
+
+        # Consulta de l&#x27;estat de la impressora
+        ordre = bytes.fromhex(&quot;51 78 A3 00 01 00 00 00 FF&quot;)
+
+        print(&quot;Enviant:&quot;, ordre.hex(&quot; &quot;))
+
+        await client.write_gatt_char(
+            AE01,
+            ordre,
+            response=False
+        )
+
+        print(&quot;Esperant resposta...&quot;)
+        await asyncio.sleep(5)
+
+        await client.stop_notify(AE02)
+
+    print(&quot;Connexió finalitzada&quot;)
+
+asyncio.run(main())
+</code></pre>
+</article>
+<article class="file" id="f-ibm-quote-py">
+  <header><h3><code>ibm_quote.py</code></h3>
+  <p class="desc">Prova d&#x27;impressió de text llarg en diverses línies.</p>
+  <p class="meta"><a href="index.html#dia-26-10">Diari 26/10</a> · 86 línies · <a href="codi/ibm_quote.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+from bleak import BleakClient
+from PIL import Image, ImageDraw, ImageFont
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+
+# CRC8 del protocol Tiny Print
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+# 1. CAMBIO: Aumentamos el alto de la imagen de 90 a 250 píxeles para que quepa todo el texto
+imatge = Image.new(&quot;1&quot;, (384, 250), 1)
+draw = ImageDraw.Draw(imatge)
+
+# 2. CAMBIO: Reducimos un poco el tamaño de la letra (de 27 a 20) para que entren más palabras por línea
+font = ImageFont.truetype(
+    &quot;/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf&quot;,
+    20
+)
+
+# 3. CAMBIO: Definimos el texto largo usando &quot;\n&quot; para indicarle dónde saltar de línea
+texto_largo = (
+    &quot;I think there is a\n&quot;
+    &quot;world market for\n&quot;
+    &quot;maybe five computers.\n\n&quot;
+    &quot;- Tom Watson,\n&quot;
+    &quot;President of IBM, 1943&quot;
+)
+
+# 4. CAMBIO: Usamos &quot;multiline_text&quot; en lugar de &quot;text&quot; para que respete los saltos de línea
+draw.multiline_text((20, 20), texto_largo, font=font, fill=0, spacing=4)
+
+# Convertir cada fila en 48 bytes
+def convertir_fila(y):
+    dades = bytearray(48)
+
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+
+    return bytes(dades)
+
+async def main():
+    async with BleakClient(MAC, timeout=20) as client:
+        print(&quot;Connectat:&quot;, client.is_connected)
+
+        async def enviar(cmd, dades):
+            await client.write_gatt_char(
+                AE01,
+                paquet(cmd, dades),
+                response=False
+            )
+            await asyncio.sleep(0.04)
+
+        # Configurar el mode text
+        await enviar(0xBE, b&quot;\x01&quot;)
+
+        # Imprimir les files de la imatge
+        for y in range(imatge.height):
+            await enviar(0xA2, convertir_fila(y))
+
+        # Avançar una mica el paper
+        await enviar(0xA1, bytes([40, 0]))
+
+        print(&quot;Ordres d&#x27;impressió enviades&quot;)
+
+asyncio.run(main())
+</code></pre>
+</article>
+<article class="file" id="f-gates-jobs-image-print-py">
+  <header><h3><code>gates_jobs_image_print.py</code></h3>
+  <p class="desc">Primera prova d&#x27;imprimir una imatge des d&#x27;un fitxer.</p>
+  <p class="meta"><a href="index.html#dia-26-10">Diari 26/10</a> · 80 línies · <a href="codi/gates_jobs_image_print.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+from bleak import BleakClient
+from PIL import Image
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+
+# CRC8 del protocolo Tiny Print
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+# =====================================================================
+# PROCESAMIENTO DE LA IMAGEN LOCAL
+# =====================================================================
+# 1. Abre la foto (Cambia &quot;foto_jobs_gates.png&quot; por la ruta de tu archivo)
+imagen_original = Image.open(&quot;foto_jobs_gates.png&quot;)
+
+# 2. Calculamos la proporción para que el ancho se ajuste exactamente a 384 píxeles
+ancho_fijo = 384
+alto_proporcional = int((imagen_original.height * ancho_fijo) / imagen_original.width)
+
+# 3. Redimensionamos la imagen
+imagen_redimensionada = imagen_original.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+# 4. Convertimos a 1 bit (Blanco y Negro puro) aplicando Dithering para que se distingan las sombras
+imatge = imagen_redimensionada.convert(&quot;1&quot;)
+# =====================================================================
+
+# Convertir cada fila en 48 bytes
+def convertir_fila(y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+async def main():
+    async with BleakClient(MAC, timeout=20) as client:
+        print(&quot;Connectat:&quot;, client.is_connected)
+
+        async def enviar(cmd, dades):
+            await client.write_gatt_char(
+                AE01,
+                paquet(cmd, dades),
+                response=False
+            )
+            await asyncio.sleep(0.04)
+
+        # Configurar el modo texto/datos
+        await enviar(0xBE, b&quot;\x01&quot;)
+
+        # Imprimir las filas de la imagen procesada
+        print(f&quot;Imprimiendo imagen de {imatge.height} líneas de alto...&quot;)
+        for y in range(imatge.height):
+            await enviar(0xA2, convertir_fila(y))
+
+        # Avanzar el papel para poder cortarlo libremente
+        await enviar(0xA1, bytes([40, 0]))
+
+        print(&quot;Órdenes de impresión enviadas con éxito&quot;)
+
+asyncio.run(main())
+</code></pre>
+</article>
+<article class="file" id="f-print-jpg-py">
+  <header><h3><code>print_jpg.py</code></h3>
+  <p class="desc">Imprimeix un JPG de l&#x27;ordinador amb més contrast.</p>
+  <p class="meta"><a href="index.html#dia-26-10">Diari 26/10</a> · 74 línies · <a href="codi/print_jpg.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+
+# CRC8 del protocolo Tiny Print
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+# =====================================================================
+# PROCESAMIENTO OPTIMIZADO PARA LA IMAGEN DEL EXPERIMENTO
+# =====================================================================
+# 1. Abre la foto corrigiendo la orientación si es un JPG de móvil
+imagen_original = ImageOps.exif_transpose(Image.open(&quot;experimento.jpg&quot;))
+
+# 2. Reescalado automático manteniendo la proporción vertical
+ancho_fijo = 384
+alto_proporcional = int((imagen_original.height * ancho_fijo) / imagen_original.width)
+imagen_redimensionada = imagen_original.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+# 3. FILTRO EXTRA: Subimos el contraste para resaltar
+potenciador = ImageEnhance.Contrast(imagen_redimensionada)
+imagen_contrastada = potenciador.enhance(1.5)  # 1.5 aumenta el contraste un 50%
+
+# 4. Convertimos a 1 bit con entramado (Dithering)
+imatge = imagen_contrastada.convert(&quot;1&quot;)
+# =====================================================================
+
+def convertir_fila(y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+async def main():
+    async with BleakClient(MAC, timeout=20) as client:
+        print(&quot;Conectado:&quot;, client.is_connected)
+
+        async def enviar(cmd, dades):
+            await client.write_gatt_char(AE01, paquet(cmd, dades), response=False)
+            await asyncio.sleep(0.04)
+
+        await enviar(0xBE, b&quot;\x01&quot;)
+
+        print(f&quot;Imprimiendo foto del experimento ({imatge.height} líneas)...&quot;)
+        for y in range(imatge.height):
+            await enviar(0xA2, convertir_fila(y))
+
+        # Avanza suficiente papel para que no se quede la foto dentro de la tapa
+        await enviar(0xA1, bytes())
+        print(&quot;¡Impresión finalizada!&quot;)
+
+asyncio.run(main())
+</code></pre>
+</article>
+<h2 class="group">Càmera</h2>
+<article class="file" id="f-tomar-foto-py">
+  <header><h3><code>tomar_foto.py</code></h3>
+  <p class="desc">Fa una foto amb la Pi Camera fent servir rpicam-still.</p>
+  <p class="meta"><a href="index.html#dia-26-10">Diari 26/10</a> · 19 línies · <a href="codi/tomar_foto.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import subprocess
+import time
+
+print(&quot;Inicializando la Raspberry Pi Camera v1.3 (Entorno Bookworm)...&quot;)
+time.sleep(2)
+
+nombre_archivo = &quot;mi_experimento.jpg&quot;
+print(f&quot;Tomando foto con rpicam-still y guardándola como &#x27;{nombre_archivo}&#x27;...&quot;)
+
+try:
+    # USAMOS EL NUEVO COMANDO OFICIAL: rpicam-still
+    # --immediate toma la foto al instante sin esperar previsualizaciones
+    subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+    print(&quot;¡Listo! Foto guardada con éxito en esta carpeta.&quot;)
+except subprocess.CalledProcessError as e:
+    print(f&quot;Error al intentar tomar la foto: {e}&quot;)
+except FileNotFoundError:
+    print(&quot;Error: No se encontró el comando &#x27;rpicam-still&#x27;.&quot;)
+</code></pre>
+</article>
+<article class="file" id="f-camara-instantanea-py">
+  <header><h3><code>camara_instantanea.py</code></h3>
+  <p class="desc">Fa la foto i la imprimeix al moment.</p>
+  <p class="meta"><a href="index.html#dia-26-10">Diari 26/10</a> · 115 línies · <a href="codi/camara_instantanea.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+import subprocess
+import time
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+
+# CRC8 del protocolo Tiny Print
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+def convertir_fila(imatge, y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+async def main():
+    nombre_archivo = &quot;mi_experimento.jpg&quot;
+    print(&quot;--------------------------------------------------&quot;)
+    print(&quot;1. CAPTURANDO IMAGEN DESDE LA PI CAMERA v1.3...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    time.sleep(1) # Breve pausa de cortesía
+    
+    try:
+        # Usamos el comando exacto que funcionó perfectamente
+        subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+        print(&quot;¡Captura completada con éxito!&quot;)
+    except Exception as e:
+        print(f&quot;Error al tomar la foto: {e}&quot;)
+        return
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;2. PROCESANDO IMAGEN PARA IMPRESIÓN TÉRMICA...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    # Abrimos la imagen de 2592x1944 recién creada
+    imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+
+    # Reescalamos manteniendo la proporción (Ancho fijo de 384 píxeles)
+    ancho_fijo = 384
+    alto_proporcional = int((imagen_original.height * ancho_fijo) / imagen_original.width)
+    imagen_redimensionada = imagen_original.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+    # Filtro de contraste para mejorar la visibilidad en papel térmico
+    potenciador = ImageEnhance.Contrast(imagen_redimensionada)
+    imagen_contrastada = potenciador.enhance(1.6) # Aumentamos contraste un 60%
+
+    # Convertimos a blanco y negro puro (1-bit Dithering)
+    imatge_final = imagen_contrastada.convert(&quot;1&quot;)
+    print(f&quot;Imagen preparada: {ancho_fijo}x{alto_proporcional} píxeles.&quot;)
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;3. CONECTANDO A IMPRESORA Y TRANSMITIENDO...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    try:
+        # Reducimos el tiempo de espera a 10 segundos para no perder tiempo si está apagada
+        async with BleakClient(MAC, timeout=10) as client:
+            print(&quot;¡Conectado por Bluetooth con éxito!&quot;)
+
+            async def enviar(cmd, dades):
+                await client.write_gatt_char(AE01, paquet(cmd, dades), response=False)
+                await asyncio.sleep(0.04)
+
+            # Iniciar el modo de datos de la impresora
+            await enviar(0xBE, b&quot;\x01&quot;)
+
+            print(f&quot;Imprimiendo tira térmica ({imatge_final.height} líneas)...&quot;)
+            for y in range(imatge_final.height):
+                await enviar(0xA2, convertir_fila(imatge_final, y))
+
+            # =====================================================================
+            # MEJORA: AVANCE EXTRA DE PAPEL PARA CORTE LIMPIO
+            # =====================================================================
+            print(&quot;Avanzando papel para el corte...&quot;)
+            # Enviamos unas 60 líneas completamente en blanco (un bloque de 48 bytes vacíos)
+            # Esto empujará el papel hacia afuera aproximadamente 4-5 centímetros
+            fila_blanca = bytearray(48)
+            for _ in range(60):
+                await enviar(0xA2, bytes(fila_blanca))
+
+            # Avanzar el mecanismo de forma nativa y cerrar
+            await enviar(0xA1, bytes())
+            print(&quot;¡Proceso finalizado! Ya puedes cortar tu papel limpiamente.&quot;)
+
+    except asyncio.TimeoutError:
+        print(&quot;\n[AVISO] No se pudo encontrar la impresora por Bluetooth.&quot;)
+        print(&quot;-&gt; Por favor, asegúrate de que la impresora está ENCENDIDA.&quot;)
+        print(&quot;-&gt; Verifica que la batería no esté agotada y que esté cerca de la Raspberry Pi.&quot;)
+        
+    except Exception as e:
+        print(f&quot;\n[ERROR] Ocurrió un fallo inesperado en la conexión: {e}&quot;)
+
+# Lanzamos el proceso asíncrono
+asyncio.run(main())
+</code></pre>
+</article>
+<article class="file" id="f-camara-instantanea-pro-py">
+  <header><h3><code>camara_instantanea_pro.py</code></h3>
+  <p class="desc">Comprova abans que la impressora estigui encesa i amb paper.</p>
+  <p class="meta"><a href="index.html#dia-26-10">Diari 26/10</a> · 151 línies · <a href="codi/camara_instantanea_pro.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+import subprocess
+import time
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+AE02 = &quot;0000ae02-0000-1000-8000-00805f9b34fb&quot;
+
+# Variable global temporal para capturar la respuesta del estado
+ultima_resposta = None
+
+# CRC8 del protocolo Tiny Print
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+def convertir_fila(imatge, y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+# Callback para procesar la notificación de estado de la impresora
+def rebre_estat(sender, data):
+    global ultima_resposta
+    ultima_resposta = data
+    print(f&quot;-&gt; Info recibida de la impresora: {data.hex(&#x27; &#x27;)}&quot;)
+
+async def main():
+    nombre_archivo = &quot;mi_experimento.jpg&quot;
+    global ultima_resposta
+
+    print(&quot;--------------------------------------------------&quot;)
+    print(&quot;1. VERIFICANDO ESTADO DE LA IMPRESORA...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    
+    try:
+        # Intentamos conectar primero para validar que esté lista y con papel
+        async with BleakClient(MAC, timeout=8) as client:
+            print(&quot;¡Conectado por Bluetooth!&quot;)
+            
+            # Activamos notificaciones en la característica AE02
+            await client.start_notify(AE02, rebre_estat)
+            
+            # Enviamos la orden de consulta de estado (A3)
+            ordre_estat = bytes.fromhex(&quot;51 78 A3 00 01 00 00 00 FF&quot;)
+            await client.write_gatt_char(AE01, ordre_estat, response=False)
+            
+            # Esperamos solo 1 segundo para la respuesta (suficiente si está encendida)
+            await asyncio.sleep(1.0)
+            await client.stop_notify(AE02)
+            
+            if ultima_resposta is None:
+                print(&quot;\n[AVISO] La impresora está conectada, pero no respondió al test de estado.&quot;)
+                print(&quot;¿Tiene papel cargado correctamente?&quot;)
+                return
+            
+            # Nota técnica: Aquí podrías desglosar los bytes de &#x27;ultima_resposta&#x27; si quieres
+            # detectar específicamente &quot;sin papel&quot; o &quot;batería baja&quot;.
+            print(&quot;¡Impresora verificada con éxito! Procediendo a la captura...&quot;)
+
+    except asyncio.TimeoutError:
+        print(&quot;\n[AVISO] No se pudo encontrar la impresora por Bluetooth.&quot;)
+        print(&quot;-&gt; Por favor, asegúrate de que la impresora está ENCENDIDA.&quot;)
+        print(&quot;-&gt; Verifica que esté cerca de la Raspberry Pi y tenga batería.&quot;)
+        return
+    except Exception as e:
+        print(f&quot;\n[ERROR] Fallo al verificar la impresora antes de la foto: {e}&quot;)
+        return
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;2. CAPTURANDO IMAGEN DESDE LA PI CAMERA v1.3...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    time.sleep(0.5) 
+    
+    try:
+        # Captura inmediata con el sistema moderno de Bookworm
+        subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+        print(&quot;¡Captura completada con éxito!&quot;)
+    except Exception as e:
+        print(f&quot;Error al tomar la foto: {e}&quot;)
+        return
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;3. PROCESANDO IMAGEN PARA IMPRESIÓN TÉRMICA...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+
+    # Reescalado proporcional (Ancho fijo de 384 píxeles)
+    ancho_fijo = 384
+    alto_proporcional = int((imagen_original.height * ancho_fijo) / imagen_original.width)
+    imagen_redimensionada = imagen_original.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+    # Filtro de contraste (+60%) y conversión a 1-bit Dithering
+    potenciador = ImageEnhance.Contrast(imagen_redimensionada)
+    imagen_contrastada = potenciador.enhance(1.6)
+    imatge_final = imagen_contrastada.convert(&quot;1&quot;)
+    print(f&quot;Imagen preparada: {ancho_fijo}x{alto_proporcional} píxeles.&quot;)
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;4. TRANSMITIENDO FOTO A LA IMPRESORA...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    try:
+        # Nos volvemos a conectar para transferir el bloque de datos de la imagen
+        async with BleakClient(MAC, timeout=10) as client:
+            async def enviar(cmd, dades):
+                await client.write_gatt_char(AE01, paquet(cmd, dades), response=False)
+                await asyncio.sleep(0.04)
+
+            # Iniciar el modo de datos de la impresora
+            await enviar(0xBE, b&quot;\x01&quot;)
+
+            print(f&quot;Imprimiendo tira térmica ({imatge_final.height} líneas)...&quot;)
+            for y in range(imatge_final.height):
+                await enviar(0xA2, convertir_fila(imatge_final, y))
+
+            print(&quot;Avanzando papel para el corte...&quot;)
+            # Inyectamos 60 líneas en blanco para el margen de corte físico
+            fila_blanca = bytearray(48)
+            for _ in range(60):
+                await enviar(0xA2, bytes(fila_blanca))
+
+            # Avanzar mecanismo nativo y cerrar
+            await enviar(0xA1, bytes())
+            print(&quot;¡Proceso finalizado! Ya puedes cortar tu foto limpiamente.&quot;)
+
+    except Exception as e:
+        print(f&quot;\n[ERROR] Ocurrió un fallo durante la transmisión de la imagen: {e}&quot;)
+
+# Lanzamos el proceso asíncrono
+asyncio.run(main())
+</code></pre>
+</article>
+<article class="file" id="f-camara-instantanea-vertical-py">
+  <header><h3><code>camara_instantanea_vertical.py</code></h3>
+  <p class="desc">Imprimeix la foto en vertical, més gran i nítida.</p>
+  <p class="meta"><a href="index.html#dia-26-10">Diari 26/10</a> · 150 línies · <a href="codi/camara_instantanea_vertical.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+import subprocess
+import time
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+AE02 = &quot;0000ae02-0000-1000-8000-00805f9b34fb&quot;
+
+ultima_resposta = None
+
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+def convertir_fila(imatge, y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+def rebre_estat(sender, data):
+    global ultima_resposta
+    ultima_resposta = data
+    print(f&quot;-&gt; Info recibida de la impresora: {data.hex(&#x27; &#x27;)}&quot;)
+
+async def main():
+    nombre_archivo = &quot;mi_experimento.jpg&quot;
+    global ultima_resposta
+
+    print(&quot;--------------------------------------------------&quot;)
+    print(&quot;1. VERIFICANDO ESTADO DE LA IMPRESORA...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    try:
+        async with BleakClient(MAC, timeout=8) as client:
+            print(&quot;¡Conectado por Bluetooth!&quot;)
+            await client.start_notify(AE02, rebre_estat)
+            
+            ordre_estat = bytes.fromhex(&quot;51 78 A3 00 01 00 00 00 FF&quot;)
+            await client.write_gatt_char(AE01, ordre_estat, response=False)
+            
+            await asyncio.sleep(1.0)
+            await client.stop_notify(AE02)
+            
+            if ultima_resposta is None:
+                print(&quot;\n[AVISO] La impresora no respondió al test de estado.&quot;)
+                return
+            print(&quot;¡Impresora lista! Procediendo...&quot;)
+    except asyncio.TimeoutError:
+        print(&quot;\n[AVISO] No se pudo encontrar la impresora. ¿Está encendida?&quot;)
+        return
+    except Exception as e:
+        print(f&quot;\n[ERROR] Fallo de conexión previo: {e}&quot;)
+        return
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;2. CAPTURANDO IMAGEN DESDE LA PI CAMERA v1.3...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    time.sleep(0.5) 
+    try:
+        subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+        print(&quot;¡Captura completada!&quot;)
+    except Exception as e:
+        print(f&quot;Error al tomar la foto: {e}&quot;)
+        return
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;3. PROCESANDO IMAGEN (FORMATO VERTICAL Y ALTA CLARIDAD)...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+
+    # =====================================================================
+    # MEJORA 1: ROTACIÓN VERTICAL
+    # Rotamos la foto 90 grados en sentido horario para que sea vertical
+    # =====================================================================
+    imagen_vertical = imagen_original.rotate(90, expand=True)
+
+    # Reescalado proporcional al ancho de la impresora (384 píxeles)
+    ancho_fijo = 384
+    alto_proporcional = int((imagen_vertical.height * ancho_fijo) / imagen_vertical.width)
+    imagen_redimensionada = imagen_vertical.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+    # =====================================================================
+    # MEJORA 3: MEJORAR LA CLARIDAD / RESOLUCIÓN VISUAL
+    # =====================================================================
+    # 1. Aplicamos un filtro de nitidez extrema para resaltar bordes y detalles
+    imagen_nitida = imagen_redimensionada.filter(ImageFilter.SHARPEN)
+    
+    # 2. Incrementamos el contraste fuertemente (factor de 1.8 o 2.0)
+    potenciador_contraste = ImageEnhance.Contrast(imagen_nitida)
+    imagen_contrastada = potenciador_contraste.enhance(1.8)
+    
+    # 3. Oscurecemos ligeramente la imagen si es necesario para que el cabezal térmico queme con fuerza
+    potenciador_brillo = ImageEnhance.Brightness(imagen_contrastada)
+    imagen_ajustada = potenciador_brillo.enhance(0.95)
+
+    # Convertimos a blanco y negro puro (1-bit Floy-Steinberg Dithering)
+    imatge_final = imagen_ajustada.convert(&quot;1&quot;)
+    print(f&quot;Imagen preparada en VERTICAL: {ancho_fijo}x{alto_proporcional} píxeles.&quot;)
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;4. TRANSMITIENDO FOTO A LA IMPRESORA...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    try:
+        async with BleakClient(MAC, timeout=10) as client:
+            async def enviar(cmd, dades):
+                await client.write_gatt_char(AE01, paquet(cmd, dades), response=False)
+                await asyncio.sleep(0.04)
+
+            await enviar(0xBE, b&quot;\x01&quot;)
+
+            print(f&quot;Imprimiendo foto vertical ({imatge_final.height} líneas)...&quot;)
+            for y in range(imatge_final.height):
+                await enviar(0xA2, convertir_fila(imatge_final, y))
+
+            # =====================================================================
+            # MEJORA 2: MÁS LÍNEAS EN BLANCO AL FINAL
+            # Incrementado a 110 líneas para un avance cómodo y corte limpio
+            # =====================================================================
+            print(&quot;Avanzando papel extra para un corte limpio...&quot;)
+            fila_blanca = bytearray(48)
+            for _ in range(110):
+                await enviar(0xA2, bytes(fila_blanca))
+
+            await enviar(0xA1, bytes())
+            print(&quot;¡Proceso finalizado! Ya puedes cortar tu foto vertical perfectamente.&quot;)
+
+    except Exception as e:
+        print(f&quot;\n[ERROR] Ocurrió un fallo durante la transmisión: {e}&quot;)
+
+asyncio.run(main())
+</code></pre>
+</article>
+<article class="file" id="f-camara-instantanea-final-py">
+  <header><h3><code>camara_instantanea_final.py</code></h3>
+  <p class="desc">Guarda cada foto a ~/MisFotosPolaroid amb la data i l&#x27;hora al nom.</p>
+  <p class="meta"><a href="index.html#dia-27-10">Diari 27/10</a> · 148 línies · <a href="codi/camara_instantanea_final.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+import os
+import subprocess
+import time
+from datetime import datetime
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+AE02 = &quot;0000ae02-0000-1000-8000-00805f9b34fb&quot;
+
+ultima_resposta = None
+
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+def convertir_fila(imatge, y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+def rebre_estat(sender, data):
+    global ultima_resposta
+    ultima_resposta = data
+    print(f&quot;-&gt; Info recibida de la impresora: {data.hex(&#x27; &#x27;)}&quot;)
+
+async def main():
+    global ultima_resposta
+
+    # ORGANIZACIÓN AUTOMÁTICA DE ARCHIVOS
+    carpeta_fotos = os.path.expanduser(&quot;~/MisFotosPolaroid&quot;)
+    os.makedirs(carpeta_fotos, exist_ok=True)
+
+    ahora = datetime.now().strftime(&quot;%Y%m%d_%H%M%S&quot;)
+    nombre_archivo = os.path.join(carpeta_fotos, f&quot;foto_{ahora}.jpg&quot;)
+
+    print(&quot;--------------------------------------------------&quot;)
+    print(&quot;1. VERIFICANDO ESTADO DE LA IMPRESORA...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    try:
+        async with BleakClient(MAC, timeout=8) as client:
+            print(&quot;¡Conectado por Bluetooth!&quot;)
+            await client.start_notify(AE02, rebre_estat)
+            
+            ordre_estat = bytes.fromhex(&quot;51 78 A3 00 01 00 00 00 FF&quot;)
+            await client.write_gatt_char(AE01, ordre_estat, response=False)
+            
+            await asyncio.sleep(1.0)
+            await client.stop_notify(AE02)
+            
+            if ultima_resposta is None:
+                print(&quot;\n[AVISO] La impresora no respondió al test de estado.&quot;)
+                return
+            print(&quot;¡Impresora lista! Procediendo...&quot;)
+    except asyncio.TimeoutError:
+        print(&quot;\n[AVISO] No se pudo encontrar la impresora. ¿Está encendida?&quot;)
+        return
+    except Exception as e:
+        print(f&quot;\n[ERROR] Fallo de conexión previo: {e}&quot;)
+        return
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(f&quot;2. CAPTURANDO IMAGEN DESDE LA PI CAMERA v1.3...&quot;)
+    print(f&quot;Guardando como: {os.path.basename(nombre_archivo)}&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    time.sleep(0.5) 
+    try:
+        subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+        print(&quot;¡Captura completada con éxito!&quot;)
+    except Exception as e:
+        print(f&quot;Error al tomar la foto: {e}&quot;)
+        return
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;3. PROCESANDO IMAGEN (FORMATO VERTICAL Y ALTA CLARIDAD)...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+
+    # Rotación vertical (90 grados)
+    imagen_vertical = imagen_original.rotate(90, expand=True)
+
+    # Reescalado proporcional al ancho de la impresora (384 píxeles)
+    ancho_fijo = 384
+    alto_proporcional = int((imagen_vertical.height * ancho_fijo) / imagen_vertical.width)
+    imagen_redimensionada = imagen_vertical.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+    # Filtros de claridad y nitidez extrema
+    imagen_nitida = imagen_redimensionada.filter(ImageFilter.SHARPEN)
+    
+    potenciador_contraste = ImageEnhance.Contrast(imagen_nitida)
+    imagen_contrastada = potenciador_contraste.enhance(1.8)
+    
+    potenciador_brillo = ImageEnhance.Brightness(imagen_contrastada)
+    imagen_ajustada = potenciador_brillo.enhance(0.95)
+
+    # Conversión final a blanco y negro puro (1-bit Dithering)
+    imatge_final = imagen_ajustada.convert(&quot;1&quot;)
+    print(f&quot;Imagen preparada en VERTICAL: {ancho_fijo}x{alto_proporcional} píxeles.&quot;)
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;4. TRANSMITIENDO FOTO A LA IMPRESORA...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    try:
+        async with BleakClient(MAC, timeout=10) as client:
+            async def enviar(cmd, dades):
+                await client.write_gatt_char(AE01, paquet(cmd, dades), response=False)
+                await asyncio.sleep(0.04)
+
+            await enviar(0xBE, b&quot;\x01&quot;)
+
+            print(f&quot;Imprimiendo foto vertical ({imatge_final.height} líneas)...&quot;)
+            for y in range(imatge_final.height):
+                await enviar(0xA2, convertir_fila(imatge_final, y))
+
+            # 110 líneas en blanco para un avance cómodo y corte limpio sin romper el dibujo
+            print(&quot;Avanzando papel extra para un corte limpio...&quot;)
+            fila_blanca = bytearray(48)
+            for _ in range(110):
+                await enviar(0xA2, bytes(fila_blanca))
+
+            await enviar(0xA1, bytes())
+            print(f&quot;¡Proceso finalizado! Foto guardada en ~/MisFotosPolaroid y ticket listo para cortar.&quot;)
+
+    except Exception as e:
+        print(f&quot;\n[ERROR] Ocurrió un fallo durante la transmisión: {e}&quot;)
+
+asyncio.run(main())
+</code></pre>
+</article>
+<h2 class="group">Telegram i botons</h2>
+<article class="file" id="f-camara-instantanea-telegram-py">
+  <header><h3><code>camara_instantanea_telegram.py</code></h3>
+  <p class="desc">Envia la foto en color per Telegram mentre s&#x27;imprimeix.</p>
+  <p class="meta"><a href="index.html#dia-27-10">Diari 27/10</a> · 209 línies · <a href="codi/camara_instantanea_telegram.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+import os
+import subprocess
+import time
+from datetime import datetime
+from gpiozero import Button
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter
+import requests
+
+# CONFIGURACIÓN BLUETOOTH
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+AE02 = &quot;0000ae02-0000-1000-8000-00805f9b34fb&quot;
+
+# CONFIGURACIÓN TELEGRAM
+TELEGRAM_TOKEN = &quot;POSA_AQUI_EL_TOKEN_DEL_BOT&quot;
+TELEGRAM_CHAT_ID = &quot;POSA_AQUI_EL_TEU_CHAT_ID&quot;
+
+ultima_resposta = None
+
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+def convertir_fila(imatge, y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+def rebre_estat(sender, data):
+    global ultima_resposta
+    ultima_resposta = data
+    print(f&quot;-&gt; Info de la impressora: {data.hex(&#x27; &#x27;)}&quot;)
+
+# Función para enviar la foto en segundo plano sin congelar la impresión
+def enviar_a_telegram(ruta_foto):
+    print(&quot;\n[Telegram] Intentando enviar la foto a tu móvil...&quot;)
+
+    url = f&quot;https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto&quot;
+
+    try:
+        with open(ruta_foto, &quot;rb&quot;) as foto:
+            payload = {
+                &quot;chat_id&quot;: TELEGRAM_CHAT_ID,
+                &quot;caption&quot;: (
+                    f&quot;📸 ¡Nueva foto de tu Raspberry Polaroid!\n&quot;
+                    f&quot;📅 {datetime.now().strftime(&#x27;%d/%m/%Y %H:%M:%S&#x27;)}&quot;
+                )
+            }
+
+            response = requests.post(
+                url,
+                data=payload,
+                files={&quot;photo&quot;: foto},
+                timeout=(5, 20)
+            )
+
+            resultado = response.json()
+
+            if response.ok and resultado.get(&quot;ok&quot;):
+                print(&quot;[Telegram] ¡Foto enviada correctamente!&quot;)
+            else:
+                print(f&quot;[Telegram] Error HTTP: {response.status_code}&quot;)
+                print(f&quot;[Telegram] Detalles: {resultado}&quot;)
+
+    except requests.exceptions.Timeout:
+        print(&quot;[Telegram] Tiempo de espera agotado.&quot;)
+    except requests.exceptions.RequestException as e:
+        print(f&quot;[Telegram] Error de conexión: {e}&quot;)
+    except Exception as e:
+        print(f&quot;[Telegram] Error inesperado: {e}&quot;)
+
+
+async def main():
+    global ultima_resposta
+
+    # CONFIGURAR BOTÓN DISPARADOR
+    boto_disparador = Button(17, pull_up=True)
+    print(&quot;\n==================================================&quot;)
+    print(&quot;📸 CÁMARA INSTANTÁNEA EN ESPERA...&quot;)
+    print(&quot;Presiona el botón físico para tomar la foto.&quot;)
+    print(&quot;==================================================&quot;)
+
+    # El programa se detiene aquí de forma segura hasta que detecte la pulsación
+    boto_disparador.wait_for_press() 
+    print(&quot;\n¡Disparo detectado! Arrancando sistema...&quot;)
+    
+    # ORGANIZACIÓN AUTOMÁTICA DE ARCHIVOS
+    carpeta_fotos = os.path.expanduser(&quot;~/MisFotosPolaroid&quot;)
+    os.makedirs(carpeta_fotos, exist_ok=True)
+
+    ahora = datetime.now().strftime(&quot;%Y%m%d_%H%M%S&quot;)
+    nombre_archivo = os.path.join(carpeta_fotos, f&quot;foto_{ahora}.jpg&quot;)
+
+    print(&quot;--------------------------------------------------&quot;)
+    print(&quot;1. VERIFICANDO ESTADO DE LA IMPRESORA...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    try:
+        async with BleakClient(MAC, timeout=8) as client:
+            print(&quot;¡Conectado por Bluetooth!&quot;)
+            await client.start_notify(AE02, rebre_estat)
+            
+            ordre_estat = bytes.fromhex(&quot;51 78 A3 00 01 00 00 00 FF&quot;)
+            await client.write_gatt_char(AE01, ordre_estat, response=False)
+            
+            await asyncio.sleep(1.0)
+            await client.stop_notify(AE02)
+            
+            if ultima_resposta is None:
+                print(&quot;\n[AVISO] La impresora no respondió al test de estado.&quot;)
+                return
+            print(&quot;¡Impresora lista! Procediendo...&quot;)
+    except asyncio.TimeoutError:
+        print(&quot;\n[AVISO] No se pudo encontrar la impresora. ¿Está encendida?&quot;)
+        return
+    except Exception as e:
+        print(f&quot;\n[ERROR] Fallo de conexión previo: {e}&quot;)
+        return
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(f&quot;2. CAPTURANDO IMAGEN DESDE LA PI CAMERA v1.3...&quot;)
+    print(f&quot;Guardando como: {os.path.basename(nombre_archivo)}&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    time.sleep(0.5) 
+    try:
+        subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+        print(&quot;¡Captura completada con éxito!&quot;)
+    except Exception as e:
+        print(f&quot;Error al tomar la foto: {e}&quot;)
+        return
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;3. PROCESANDO IMAGEN (FORMATO VERTICAL Y ALTA CLARIDAD)...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+
+    # Rotación vertical (90 grados)
+    imagen_vertical = imagen_original.rotate(90, expand=True)
+
+    # Reescalado proporcional al ancho de la impresora (384 píxeles)
+    ancho_fijo = 384
+    alto_proporcional = int((imagen_vertical.height * ancho_fijo) / imagen_vertical.width)
+    imagen_redimensionada = imagen_vertical.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+    # Filtros de claridad y nitidez extrema
+    imagen_nitida = imagen_redimensionada.filter(ImageFilter.SHARPEN)
+    
+    potenciador_contraste = ImageEnhance.Contrast(imagen_nitida)
+    imagen_contrastada = potenciador_contraste.enhance(1.8)
+    
+    potenciador_brillo = ImageEnhance.Brightness(imagen_contrastada)
+    imagen_ajustada = potenciador_brillo.enhance(0.95)
+
+    # Conversión final a blanco y negro puro (1-bit Dithering)
+    imatge_final = imagen_ajustada.convert(&quot;1&quot;)
+    print(f&quot;Imagen preparada en VERTICAL: {ancho_fijo}x{alto_proporcional} píxeles.&quot;)
+
+    print(&quot;\n--------------------------------------------------&quot;)
+    print(&quot;4. TRANSMITIENDO FOTO A LA IMPRESORA Y ENVIANDO A TELEGRAM...&quot;)
+    print(&quot;--------------------------------------------------&quot;)
+    try:
+        # Disparamos el envío a Telegram en paralelo para aprovechar el tiempo mientras conecta el BLE
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(None, enviar_a_telegram, nombre_archivo)
+
+        async with BleakClient(MAC, timeout=10) as client:
+            async def enviar(cmd, dades):
+                await client.write_gatt_char(AE01, paquet(cmd, dades), response=False)
+                await asyncio.sleep(0.04)
+
+            await enviar(0xBE, b&quot;\x01&quot;)
+
+            print(f&quot;Imprimiendo foto vertical ({imatge_final.height} líneas)...&quot;)
+            for y in range(imatge_final.height):
+                await enviar(0xA2, convertir_fila(imatge_final, y))
+
+            # 110 líneas en blanco para el avance físico
+            print(&quot;Avanzando papel extra para un corte limpio...&quot;)
+            fila_blanca = bytearray(48)
+            for _ in range(110):
+                await enviar(0xA2, bytes(fila_blanca))
+
+            await enviar(0xA1, bytes())
+            print(f&quot;\n¡Proceso finalizado con éxito!&quot;)
+
+    except Exception as e:
+        print(f&quot;\n[ERROR] Ocurrió un fallo durante la transmisión: {e}&quot;)
+
+asyncio.run(main())
+</code></pre>
+</article>
+<article class="file" id="f-test-boto-py">
+  <header><h3><code>test_boto.py</code></h3>
+  <p class="desc">Prova el botó de foto connectat a GPIO17.</p>
+  <p class="meta"><a href="index.html#dia-27-10">Diari 27/10</a> · 19 línies · <a href="codi/test_boto.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import time
+from gpiozero import Button
+
+# Configuramos el botón en el pin GPIO 17
+# pull_up=True activa una resistencia interna para que el pin no capte interferencias
+boto = Button(17, pull_up=True)
+
+print(&quot;--- TEST DEL BOTÓN DISPARADOR ---&quot;)
+print(&quot;Presiona el botón para comprobar que funciona (Ctrl+C para salir)...&quot;)
+
+try:
+    while True:
+        if boto.is_pressed:
+            print(&quot;¡Botón pulsado correctamente! 🎉&quot;)
+            time.sleep(0.3) # Evita que se repita el mensaje mil veces por segundo
+        time.sleep(0.1)
+except KeyboardInterrupt:
+    print(&quot;\nTest finalizado.&quot;)
+</code></pre>
+</article>
+<article class="file" id="f-camara-instantanea-telegram-boton-py">
+  <header><h3><code>camara_instantanea_telegram_boton.py</code></h3>
+  <p class="desc">Fa una foto cada vegada que es prem el botó, en bucle infinit.</p>
+  <p class="meta"><a href="index.html#dia-27-10">Diari 27/10</a> · 223 línies · <a href="codi/camara_instantanea_telegram_boton.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+import os
+import subprocess
+import time
+from datetime import datetime
+from gpiozero import Button
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter
+import requests
+
+# CONFIGURACIÓN BLUETOOTH
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+AE02 = &quot;0000ae02-0000-1000-8000-00805f9b34fb&quot;
+
+# CONFIGURACIÓN TELEGRAM
+TELEGRAM_TOKEN = &quot;POSA_AQUI_EL_TOKEN_DEL_BOT&quot;
+TELEGRAM_CHAT_ID = &quot;POSA_AQUI_EL_TEU_CHAT_ID&quot;
+
+ultima_resposta = None
+
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+def convertir_fila(imatge, y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+def rebre_estat(sender, data):
+    global ultima_resposta
+    ultima_resposta = data
+    print(f&quot;-&gt; Info de la impressora: {data.hex(&#x27; &#x27;)}&quot;)
+
+# Función para enviar la foto en segundo plano sin congelar la impresión
+def enviar_a_telegram(ruta_foto):
+    print(&quot;\n[Telegram] Intentando enviar la foto a tu móvil...&quot;)
+
+    url = f&quot;https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto&quot;
+
+    try:
+        with open(ruta_foto, &quot;rb&quot;) as foto:
+            payload = {
+                &quot;chat_id&quot;: TELEGRAM_CHAT_ID,
+                &quot;caption&quot;: (
+                    f&quot;📸 ¡Nueva foto de tu Raspberry Polaroid!\n&quot;
+                    f&quot;📅 {datetime.now().strftime(&#x27;%d/%m/%Y %H:%M:%S&#x27;)}&quot;
+                )
+            }
+
+            response = requests.post(
+                url,
+                data=payload,
+                files={&quot;photo&quot;: foto},
+                timeout=(5, 20)
+            )
+
+            resultado = response.json()
+
+            if response.ok and resultado.get(&quot;ok&quot;):
+                print(&quot;[Telegram] ¡Foto enviada correctamente!&quot;)
+            else:
+                print(f&quot;[Telegram] Error HTTP: {response.status_code}&quot;)
+                print(f&quot;[Telegram] Detalles: {resultado}&quot;)
+
+    except requests.exceptions.Timeout:
+        print(&quot;[Telegram] Tiempo de espera agotado.&quot;)
+    except requests.exceptions.RequestException as e:
+        print(f&quot;[Telegram] Error de conexión: {e}&quot;)
+    except Exception as e:
+        print(f&quot;[Telegram] Error inesperado: {e}&quot;)
+
+
+async def main():
+    global ultima_resposta
+
+    # CONFIGURAR BOTÓN DISPARADOR (Se inicializa una sola vez fuera del bucle)
+    boto_disparador = Button(17, pull_up=True)
+    
+    # ORGANIZACIÓN AUTOMÁTICA DE ARCHIVOS (Se crea la carpeta una sola vez)
+    carpeta_fotos = os.path.expanduser(&quot;~/MisFotosPolaroid&quot;)
+    os.makedirs(carpeta_fotos, exist_ok=True)
+
+    # 🔄 BUCLE INFINITO PARA CONVERTIRLO EN CÁMARA CONTINUA
+    while True:
+        ultima_resposta = None  # Reseteamos el estado para el nuevo disparo
+        
+        print(&quot;\n==================================================&quot;)
+        print(&quot;📸 CÁMARA INSTANTÁNEA EN ESPERA...&quot;)
+        print(&quot;Presiona el botón físico para tomar una foto.&quot;)
+        print(&quot;==================================================&quot;)
+
+        # El programa se detiene aquí de forma segura hasta que detecte la pulsación
+        boto_disparador.wait_for_press() 
+        print(&quot;\n¡Disparo detectado! Arrancando sistema...&quot;)
+
+        # Generamos el nombre del archivo con la hora exacta de la pulsación actual
+        ahora = datetime.now().strftime(&quot;%Y%m%d_%H%M%S&quot;)
+        nombre_archivo = os.path.join(carpeta_fotos, f&quot;foto_{ahora}.jpg&quot;)
+
+        print(&quot;--------------------------------------------------&quot;)
+        print(&quot;1. VERIFICANDO ESTADO DE LA IMPRESORA...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        try:
+            async with BleakClient(MAC, timeout=8) as client:
+                print(&quot;¡Conectado por Bluetooth!&quot;)
+                await client.start_notify(AE02, rebre_estat)
+                
+                ordre_estat = bytes.fromhex(&quot;51 78 A3 00 01 00 00 00 FF&quot;)
+                await client.write_gatt_char(AE01, ordre_estat, response=False)
+                
+                await asyncio.sleep(1.0)
+                await client.stop_notify(AE02)
+                
+                if ultima_resposta is None:
+                    print(&quot;\n[AVISO] La impresora no respondió al test de estado. Reintentando en el próximo clic.&quot;)
+                    continue  # Regresa al inicio del bucle a esperar otra pulsación
+                print(&quot;¡Impresora lista! Procediendo...&quot;)
+        except asyncio.TimeoutError:
+            print(&quot;\n[AVISO] No se pudo encontrar la impresora. ¿Está encendida? Reintentando en el próximo clic.&quot;)
+            continue
+        except Exception as e:
+            print(f&quot;\n[ERROR] Fallo de conexión previo: {e}&quot;)
+            continue
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(f&quot;2. CAPTURANDO IMAGEN DESDE LA PI CAMERA v1.3...&quot;)
+        print(f&quot;Guardando como: {os.path.basename(nombre_archivo)}&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        time.sleep(0.5) 
+        try:
+            subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+            print(&quot;¡Captura completada con éxito!&quot;)
+        except Exception as e:
+            print(f&quot;Error al tomar la foto: {e}&quot;)
+            continue
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(&quot;3. PROCESANDO IMAGEN (FORMATO VERTICAL Y ALTA CLARIDAD)...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+
+        # Rotación vertical (90 grados)
+        imagen_vertical = imagen_original.rotate(90, expand=True)
+
+        # Reescalado proporcional al ancho de la impresora (384 píxeles)
+        ancho_fijo = 384
+        alto_proporcional = int((imagen_vertical.height * ancho_fijo) / imagen_vertical.width)
+        imagen_redimensionada = imagen_vertical.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+        # Filtros de claridad y nitidez extrema
+        imagen_nitida = imagen_redimensionada.filter(ImageFilter.SHARPEN)
+        
+        potenciador_contraste = ImageEnhance.Contrast(imagen_nitida)
+        imagen_contrastada = potenciador_contraste.enhance(1.8)
+        
+        potenciador_brillo = ImageEnhance.Brightness(imagen_contrastada)
+        imagen_ajustada = potenciador_brillo.enhance(0.95)
+
+        # Conversión final a blanco y negro puro (1-bit Dithering)
+        imatge_final = imagen_ajustada.convert(&quot;1&quot;)
+        print(f&quot;Imagen preparada en VERTICAL: {ancho_fijo}x{alto_proporcional} píxeles.&quot;)
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(&quot;4. TRANSMITIENDO FOTO A LA IMPRESORA Y ENVIANDO A TELEGRAM...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        try:
+            # Disparamos el envío a Telegram en paralelo para aprovechar el tiempo mientras conecta el BLE
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, enviar_a_telegram, nombre_archivo)
+
+            async with BleakClient(MAC, timeout=10) as client:
+                async def enviar(cmd, dades):
+                    await client.write_gatt_char(AE01, paquet(cmd, dades), response=False)
+                    await asyncio.sleep(0.04)
+
+                await enviar(0xBE, b&quot;\x01&quot;)
+
+                print(f&quot;Imprimiendo foto vertical ({imatge_final.height} líneas)...&quot;)
+                for y in range(imatge_final.height):
+                    await enviar(0xA2, convertir_fila(imatge_final, y))
+
+                # 110 líneas en blanco para el avance físico
+                print(&quot;Avanzando papel extra para un corte limpio...&quot;)
+                fila_blanca = bytearray(48)
+                for _ in range(110):
+                    await enviar(0xA2, bytes(fila_blanca))
+
+                await enviar(0xA1, bytes())
+                print(f&quot;\n¡Proceso finalizado con éxito!&quot;)
+
+        except Exception as e:
+            print(f&quot;\n[ERROR] Ocurrió un fallo durante la transmisión: {e}&quot;)
+
+        # Pequeña pausa de seguridad antes de permitir el siguiente disparo físico
+        print(&quot;\nPreparando cámara para el siguiente disparo...&quot;)
+        await asyncio.sleep(3.0)
+
+# Lanzamos el proceso asíncrono básico
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    print(&quot;\n[Sistema] Cámara detenida de forma manual desde la terminal (Ctrl+C).&quot;)
+</code></pre>
+</article>
+<article class="file" id="f-camera-boto-apagat-py">
+  <header><h3><code>camera_boto_apagat.py</code></h3>
+  <p class="desc">Afegeix el botó d&#x27;apagada a GPIO3 (3 segons premut).</p>
+  <p class="meta"><a href="index.html#dia-27-10">Diari 27/10</a> · 195 línies · <a href="codi/camera_boto_apagat.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+import os
+import subprocess
+import time
+from datetime import datetime
+from gpiozero import Button
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter
+import requests
+import sys
+
+# CONFIGURACIÓN BLUETOOTH
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+AE02 = &quot;0000ae02-0000-1000-8000-00805f9b34fb&quot;
+
+# CONFIGURACIÓN TELEGRAM
+TELEGRAM_TOKEN = &quot;POSA_AQUI_EL_TOKEN_DEL_BOT&quot;
+TELEGRAM_CHAT_ID = &quot;POSA_AQUI_EL_TEU_CHAT_ID&quot;
+
+ultima_resposta = None
+
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+def convertir_fila(imatge, y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+def rebre_estat(sender, data):
+    global ultima_resposta
+    ultima_resposta = data
+    print(f&quot;-&gt; Info de la impressora: {data.hex(&#x27; &#x27;)}&quot;)
+
+def enviar_a_telegram(ruta_foto):
+    print(&quot;\n[Telegram] Intentando enviar la foto a tu móvil...&quot;)
+    url = f&quot;https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto&quot;
+    try:
+        with open(ruta_foto, &quot;rb&quot;) as foto:
+            payload = {
+                &quot;chat_id&quot;: TELEGRAM_CHAT_ID,
+                &quot;caption&quot;: f&quot;📸 ¡Nueva foto de tu Raspberry Polaroid!\n📅 {datetime.now().strftime(&#x27;%d/%m/%Y %H:%M:%S&#x27;)}&quot;
+            }
+            response = requests.post(url, data=payload, files={&quot;photo&quot;: foto}, timeout=(5, 20))
+            resultado = response.json()
+            if response.ok and resultado.get(&quot;ok&quot;):
+                print(&quot;[Telegram] ¡Foto enviada correctamente!&quot;)
+            else:
+                print(f&quot;[Telegram] Error: {response.status_code}&quot;)
+    except Exception as e:
+        print(f&quot;[Telegram] Error de conexión: {e}&quot;)
+
+# FUNCIÓN DE APAGADO SEGURO CON AVISO EN TERMINAL
+def apagar_sistema():
+    print(&quot;\n\033[91m==================================================&quot;)
+    print(&quot;⚠️ ¡BOTÓN DE APAGADO DETECTADO! (3 SEGUNDOS)&quot;)
+    print(&quot;Cerrando el sistema de forma segura ahora mismo...&quot;)
+    print(&quot;==================================================\033[0m&quot;)
+    time.sleep(2.0)
+    # Ejecuta el comando oficial de apagado del sistema operativo
+    os.system(&quot;sudo shutdown -h now&quot;)
+    sys.exit()
+
+async def main():
+    global ultima_resposta
+
+    # CONFIGURAR CONFIGURACIÓN DE BOTONES
+    boto_disparador = Button(17, pull_up=True)
+    
+    # Configurar botón de apagado en GPIO 3 con tiempo de mantenimiento de 3 segundos
+    boto_apagado = Button(3, pull_up=True, hold_time=3.0)
+    boto_apagado.when_held = apagar_sistema  # Si se mantiene 3 seg, salta la función
+
+    carpeta_fotos = os.path.expanduser(&quot;~/MisFotosPolaroid&quot;)
+    os.makedirs(carpeta_fotos, exist_ok=True)
+
+    while True:
+        ultima_resposta = None
+        
+        print(&quot;\n==================================================&quot;)
+        print(&quot;📸 CÁMARA INSTANTÁNEA EN ESPERA...&quot;)
+        print(&quot;-&gt; Pulsa el DISPARADOR (GPIO 17) para hacer una foto.&quot;)
+        print(&quot;-&gt; Mantén presionado APAGAR (GPIO 3) 3 seg para cerrar.&quot;)
+        print(&quot;==================================================&quot;)
+
+        # Usamos un bucle de espera corto para que Python pueda atender al botón de apagado en paralelo
+        while not boto_disparador.is_pressed:
+            await asyncio.sleep(0.1)
+            
+        print(&quot;\n¡Disparo detectado! Arrancando sistema...&quot;)
+
+        ahora = datetime.now().strftime(&quot;%Y%m%d_%H%M%S&quot;)
+        nombre_archivo = os.path.join(carpeta_fotos, f&quot;foto_{ahora}.jpg&quot;)
+
+        print(&quot;--------------------------------------------------&quot;)
+        print(&quot;1. VERIFICANDO ESTADO DE LA IMPRESORA...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        try:
+            async with BleakClient(MAC, timeout=8) as client:
+                print(&quot;¡Conectado por Bluetooth!&quot;)
+                await client.start_notify(AE02, rebre_estat)
+                ordre_estat = bytes.fromhex(&quot;51 78 A3 00 01 00 00 00 FF&quot;)
+                await client.write_gatt_char(AE01, ordre_estat, response=False)
+                await asyncio.sleep(1.0)
+                await client.stop_notify(AE02)
+                
+                if ultima_resposta is None:
+                    print(&quot;\n[AVISO] La impresora no respondió. Reintentando...&quot;)
+                    continue
+                print(&quot;¡Impresora lista! Procediendo...&quot;)
+        except Exception as e:
+            print(f&quot;\n[AVISO] Error de impresora: {e}. Reintentando...&quot;)
+            continue
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(f&quot;2. CAPTURANDO IMAGEN DESDE LA PI CAMERA v1.3...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        time.sleep(0.5) 
+        try:
+            subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+            print(&quot;¡Captura completada!&quot;)
+        except Exception as e:
+            print(f&quot;Error al tomar la foto: {e}&quot;)
+            continue
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(&quot;3. PROCESANDO IMAGEN...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+        imagen_vertical = imagen_original.rotate(90, expand=True)
+
+        ancho_fijo = 384
+        alto_proporcional = int((imagen_vertical.height * ancho_fijo) / imagen_vertical.width)
+        imagen_redimensionada = imagen_vertical.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+        imagen_nitida = imagen_redimensionada.filter(ImageFilter.SHARPEN)
+        imagen_contrastada = ImageEnhance.Contrast(imagen_nitida).enhance(1.8)
+        imagen_ajustada = ImageEnhance.Brightness(imagen_contrastada).enhance(0.95)
+        imatge_final = imagen_ajustada.convert(&quot;1&quot;)
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(&quot;4. TRANSMITIENDO FOTO Y ENVIANDO A TELEGRAM...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        try:
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, enviar_a_telegram, nombre_archivo)
+
+            async with BleakClient(MAC, timeout=10) as client:
+                async def enviar(cmd, dades):
+                    await client.write_gatt_char(AE01, paquet(cmd, dades), response=False)
+                    await asyncio.sleep(0.04)
+
+                await enviar(0xBE, b&quot;\x01&quot;)
+                print(f&quot;Imprimiendo foto vertical ({imatge_final.height} líneas)...&quot;)
+                for y in range(imatge_final.height):
+                    await enviar(0xA2, convertir_fila(imatge_final, y))
+
+                print(&quot;Avanzando papel extra...&quot;)
+                fila_blanca = bytearray(48)
+                for _ in range(110):
+                    await enviar(0xA2, bytes(fila_blanca))
+
+                await enviar(0xA1, bytes())
+                print(f&quot;\n¡Proceso finalizado con éxito!&quot;)
+        except Exception as e:
+            print(f&quot;\n[ERROR] Fallo en la transmisión: {e}&quot;)
+
+        print(&quot;\nPreparando cámara para el siguiente disparo...&quot;)
+        await asyncio.sleep(3.0)
+
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    print(&quot;\n[Sistema] Cámara detenida de forma manual.&quot;)
+</code></pre>
+</article>
+<article class="file" id="f-camera-pi-v1-py">
+  <header><h3><code>camera_pi_v1.py</code></h3>
+  <p class="desc">Còpia de la versió amb els dos botons.</p>
+  <p class="meta"><a href="index.html#dia-29-10">Diari 29/10</a> · 195 línies · <a href="codi/camera_pi_v1.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+import os
+import subprocess
+import time
+from datetime import datetime
+from gpiozero import Button
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter
+import requests
+import sys
+
+# CONFIGURACIÓN BLUETOOTH
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+AE02 = &quot;0000ae02-0000-1000-8000-00805f9b34fb&quot;
+
+# CONFIGURACIÓN TELEGRAM
+TELEGRAM_TOKEN = &quot;POSA_AQUI_EL_TOKEN_DEL_BOT&quot;
+TELEGRAM_CHAT_ID = &quot;POSA_AQUI_EL_TEU_CHAT_ID&quot;
+
+ultima_resposta = None
+
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+def convertir_fila(imatge, y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+def rebre_estat(sender, data):
+    global ultima_resposta
+    ultima_resposta = data
+    print(f&quot;-&gt; Info de la impressora: {data.hex(&#x27; &#x27;)}&quot;)
+
+def enviar_a_telegram(ruta_foto):
+    print(&quot;\n[Telegram] Intentando enviar la foto a tu móvil...&quot;)
+    url = f&quot;https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto&quot;
+    try:
+        with open(ruta_foto, &quot;rb&quot;) as foto:
+            payload = {
+                &quot;chat_id&quot;: TELEGRAM_CHAT_ID,
+                &quot;caption&quot;: f&quot;📸 ¡Nueva foto de tu Raspberry Polaroid!\n📅 {datetime.now().strftime(&#x27;%d/%m/%Y %H:%M:%S&#x27;)}&quot;
+            }
+            response = requests.post(url, data=payload, files={&quot;photo&quot;: foto}, timeout=(5, 20))
+            resultado = response.json()
+            if response.ok and resultado.get(&quot;ok&quot;):
+                print(&quot;[Telegram] ¡Foto enviada correctamente!&quot;)
+            else:
+                print(f&quot;[Telegram] Error: {response.status_code}&quot;)
+    except Exception as e:
+        print(f&quot;[Telegram] Error de conexión: {e}&quot;)
+
+# FUNCIÓN DE APAGADO SEGURO CON AVISO EN TERMINAL
+def apagar_sistema():
+    print(&quot;\n\033[91m==================================================&quot;)
+    print(&quot;⚠️ ¡BOTÓN DE APAGADO DETECTADO! (3 SEGUNDOS)&quot;)
+    print(&quot;Cerrando el sistema de forma segura ahora mismo...&quot;)
+    print(&quot;==================================================\033[0m&quot;)
+    time.sleep(2.0)
+    # Ejecuta el comando oficial de apagado del sistema operativo
+    os.system(&quot;sudo shutdown -h now&quot;)
+    sys.exit()
+
+async def main():
+    global ultima_resposta
+
+    # CONFIGURAR CONFIGURACIÓN DE BOTONES
+    boto_disparador = Button(17, pull_up=True)
+    
+    # Configurar botón de apagado en GPIO 3 con tiempo de mantenimiento de 3 segundos
+    boto_apagado = Button(3, pull_up=True, hold_time=3.0)
+    boto_apagado.when_held = apagar_sistema  # Si se mantiene 3 seg, salta la función
+
+    carpeta_fotos = os.path.expanduser(&quot;~/MisFotosPolaroid&quot;)
+    os.makedirs(carpeta_fotos, exist_ok=True)
+
+    while True:
+        ultima_resposta = None
+        
+        print(&quot;\n==================================================&quot;)
+        print(&quot;📸 CÁMARA INSTANTÁNEA EN ESPERA...&quot;)
+        print(&quot;-&gt; Pulsa el DISPARADOR (GPIO 17) para hacer una foto.&quot;)
+        print(&quot;-&gt; Mantén presionado APAGAR (GPIO 3) 3 seg para cerrar.&quot;)
+        print(&quot;==================================================&quot;)
+
+        # Usamos un bucle de espera corto para que Python pueda atender al botón de apagado en paralelo
+        while not boto_disparador.is_pressed:
+            await asyncio.sleep(0.1)
+            
+        print(&quot;\n¡Disparo detectado! Arrancando sistema...&quot;)
+
+        ahora = datetime.now().strftime(&quot;%Y%m%d_%H%M%S&quot;)
+        nombre_archivo = os.path.join(carpeta_fotos, f&quot;foto_{ahora}.jpg&quot;)
+
+        print(&quot;--------------------------------------------------&quot;)
+        print(&quot;1. VERIFICANDO ESTADO DE LA IMPRESORA...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        try:
+            async with BleakClient(MAC, timeout=8) as client:
+                print(&quot;¡Conectado por Bluetooth!&quot;)
+                await client.start_notify(AE02, rebre_estat)
+                ordre_estat = bytes.fromhex(&quot;51 78 A3 00 01 00 00 00 FF&quot;)
+                await client.write_gatt_char(AE01, ordre_estat, response=False)
+                await asyncio.sleep(1.0)
+                await client.stop_notify(AE02)
+                
+                if ultima_resposta is None:
+                    print(&quot;\n[AVISO] La impresora no respondió. Reintentando...&quot;)
+                    continue
+                print(&quot;¡Impresora lista! Procediendo...&quot;)
+        except Exception as e:
+            print(f&quot;\n[AVISO] Error de impresora: {e}. Reintentando...&quot;)
+            continue
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(f&quot;2. CAPTURANDO IMAGEN DESDE LA PI CAMERA v1.3...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        time.sleep(0.5) 
+        try:
+            subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+            print(&quot;¡Captura completada!&quot;)
+        except Exception as e:
+            print(f&quot;Error al tomar la foto: {e}&quot;)
+            continue
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(&quot;3. PROCESANDO IMAGEN...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+        imagen_vertical = imagen_original.rotate(90, expand=True)
+
+        ancho_fijo = 384
+        alto_proporcional = int((imagen_vertical.height * ancho_fijo) / imagen_vertical.width)
+        imagen_redimensionada = imagen_vertical.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+        imagen_nitida = imagen_redimensionada.filter(ImageFilter.SHARPEN)
+        imagen_contrastada = ImageEnhance.Contrast(imagen_nitida).enhance(1.8)
+        imagen_ajustada = ImageEnhance.Brightness(imagen_contrastada).enhance(0.95)
+        imatge_final = imagen_ajustada.convert(&quot;1&quot;)
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(&quot;4. TRANSMITIENDO FOTO Y ENVIANDO A TELEGRAM...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        try:
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, enviar_a_telegram, nombre_archivo)
+
+            async with BleakClient(MAC, timeout=10) as client:
+                async def enviar(cmd, dades):
+                    await client.write_gatt_char(AE01, paquet(cmd, dades), response=False)
+                    await asyncio.sleep(0.04)
+
+                await enviar(0xBE, b&quot;\x01&quot;)
+                print(f&quot;Imprimiendo foto vertical ({imatge_final.height} líneas)...&quot;)
+                for y in range(imatge_final.height):
+                    await enviar(0xA2, convertir_fila(imatge_final, y))
+
+                print(&quot;Avanzando papel extra...&quot;)
+                fila_blanca = bytearray(48)
+                for _ in range(110):
+                    await enviar(0xA2, bytes(fila_blanca))
+
+                await enviar(0xA1, bytes())
+                print(f&quot;\n¡Proceso finalizado con éxito!&quot;)
+        except Exception as e:
+            print(f&quot;\n[ERROR] Fallo en la transmisión: {e}&quot;)
+
+        print(&quot;\nPreparando cámara para el siguiente disparo...&quot;)
+        await asyncio.sleep(3.0)
+
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    print(&quot;\n[Sistema] Cámara detenida de forma manual.&quot;)
+</code></pre>
+</article>
+<h2 class="group">Programa principal</h2>
+<article class="file" id="f-polaroid-pi-v1-py">
+  <header><h3><code>polaroid_pi_v1.py</code></h3>
+  <p class="desc">Primera versió que arrenca sola amb systemd.</p>
+  <p class="meta"><a href="index.html#dia-29-10">Diari 29/10</a> · 195 línies · <a href="codi/polaroid_pi_v1.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+import os
+import subprocess
+import time
+from datetime import datetime
+from gpiozero import Button
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter
+import requests
+import sys
+
+# CONFIGURACIÓN BLUETOOTH
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+AE02 = &quot;0000ae02-0000-1000-8000-00805f9b34fb&quot;
+
+# CONFIGURACIÓN TELEGRAM
+TELEGRAM_TOKEN = &quot;POSA_AQUI_EL_TOKEN_DEL_BOT&quot;
+TELEGRAM_CHAT_ID = &quot;POSA_AQUI_EL_TEU_CHAT_ID&quot;
+
+ultima_resposta = None
+
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+def convertir_fila(imatge, y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+def rebre_estat(sender, data):
+    global ultima_resposta
+    ultima_resposta = data
+    print(f&quot;-&gt; Info de la impressora: {data.hex(&#x27; &#x27;)}&quot;)
+
+def enviar_a_telegram(ruta_foto):
+    print(&quot;\n[Telegram] Intentando enviar la foto a tu móvil...&quot;)
+    url = f&quot;https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto&quot;
+    try:
+        with open(ruta_foto, &quot;rb&quot;) as foto:
+            payload = {
+                &quot;chat_id&quot;: TELEGRAM_CHAT_ID,
+                &quot;caption&quot;: f&quot;📸 ¡Nueva foto de tu Raspberry Polaroid!\n📅 {datetime.now().strftime(&#x27;%d/%m/%Y %H:%M:%S&#x27;)}&quot;
+            }
+            response = requests.post(url, data=payload, files={&quot;photo&quot;: foto}, timeout=(5, 20))
+            resultado = response.json()
+            if response.ok and resultado.get(&quot;ok&quot;):
+                print(&quot;[Telegram] ¡Foto enviada correctamente!&quot;)
+            else:
+                print(f&quot;[Telegram] Error: {response.status_code}&quot;)
+    except Exception as e:
+        print(f&quot;[Telegram] Error de conexión: {e}&quot;)
+
+# FUNCIÓN DE APAGADO SEGURO CON AVISO EN TERMINAL
+def apagar_sistema():
+    print(&quot;\n\033[91m==================================================&quot;)
+    print(&quot;⚠️ ¡BOTÓN DE APAGADO DETECTADO! (3 SEGUNDOS)&quot;)
+    print(&quot;Cerrando el sistema de forma segura ahora mismo...&quot;)
+    print(&quot;==================================================\033[0m&quot;)
+    time.sleep(2.0)
+    # Ejecuta el comando oficial de apagado del sistema operativo
+    os.system(&quot;sudo shutdown -h now&quot;)
+    sys.exit()
+
+async def main():
+    global ultima_resposta
+
+    # CONFIGURAR CONFIGURACIÓN DE BOTONES
+    boto_disparador = Button(17, pull_up=True)
+    
+    # Configurar botón de apagado en GPIO 3 con tiempo de mantenimiento de 3 segundos
+    boto_apagado = Button(3, pull_up=True, hold_time=3.0)
+    boto_apagado.when_held = apagar_sistema  # Si se mantiene 3 seg, salta la función
+
+    carpeta_fotos = os.path.expanduser(&quot;~/MisFotosPolaroid&quot;)
+    os.makedirs(carpeta_fotos, exist_ok=True)
+
+    while True:
+        ultima_resposta = None
+        
+        print(&quot;\n==================================================&quot;)
+        print(&quot;📸 CÁMARA INSTANTÁNEA EN ESPERA...&quot;)
+        print(&quot;-&gt; Pulsa el DISPARADOR (GPIO 17) para hacer una foto.&quot;)
+        print(&quot;-&gt; Mantén presionado APAGAR (GPIO 3) 3 seg para cerrar.&quot;)
+        print(&quot;==================================================&quot;)
+
+        # Usamos un bucle de espera corto para que Python pueda atender al botón de apagado en paralelo
+        while not boto_disparador.is_pressed:
+            await asyncio.sleep(0.1)
+            
+        print(&quot;\n¡Disparo detectado! Arrancando sistema...&quot;)
+
+        ahora = datetime.now().strftime(&quot;%Y%m%d_%H%M%S&quot;)
+        nombre_archivo = os.path.join(carpeta_fotos, f&quot;foto_{ahora}.jpg&quot;)
+
+        print(&quot;--------------------------------------------------&quot;)
+        print(&quot;1. VERIFICANDO ESTADO DE LA IMPRESORA...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        try:
+            async with BleakClient(MAC, timeout=8) as client:
+                print(&quot;¡Conectado por Bluetooth!&quot;)
+                await client.start_notify(AE02, rebre_estat)
+                ordre_estat = bytes.fromhex(&quot;51 78 A3 00 01 00 00 00 FF&quot;)
+                await client.write_gatt_char(AE01, ordre_estat, response=False)
+                await asyncio.sleep(1.0)
+                await client.stop_notify(AE02)
+                
+                if ultima_resposta is None:
+                    print(&quot;\n[AVISO] La impresora no respondió. Reintentando...&quot;)
+                    continue
+                print(&quot;¡Impresora lista! Procediendo...&quot;)
+        except Exception as e:
+            print(f&quot;\n[AVISO] Error de impresora: {e}. Reintentando...&quot;)
+            continue
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(f&quot;2. CAPTURANDO IMAGEN DESDE LA PI CAMERA v1.3...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        time.sleep(0.5) 
+        try:
+            subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+            print(&quot;¡Captura completada!&quot;)
+        except Exception as e:
+            print(f&quot;Error al tomar la foto: {e}&quot;)
+            continue
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(&quot;3. PROCESANDO IMAGEN...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+        imagen_vertical = imagen_original.rotate(90, expand=True)
+
+        ancho_fijo = 384
+        alto_proporcional = int((imagen_vertical.height * ancho_fijo) / imagen_vertical.width)
+        imagen_redimensionada = imagen_vertical.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+        imagen_nitida = imagen_redimensionada.filter(ImageFilter.SHARPEN)
+        imagen_contrastada = ImageEnhance.Contrast(imagen_nitida).enhance(1.8)
+        imagen_ajustada = ImageEnhance.Brightness(imagen_contrastada).enhance(0.95)
+        imatge_final = imagen_ajustada.convert(&quot;1&quot;)
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(&quot;4. TRANSMITIENDO FOTO Y ENVIANDO A TELEGRAM...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        try:
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, enviar_a_telegram, nombre_archivo)
+
+            async with BleakClient(MAC, timeout=10) as client:
+                async def enviar(cmd, dades):
+                    await client.write_gatt_char(AE01, paquet(cmd, dades), response=False)
+                    await asyncio.sleep(0.04)
+
+                await enviar(0xBE, b&quot;\x01&quot;)
+                print(f&quot;Imprimiendo foto vertical ({imatge_final.height} líneas)...&quot;)
+                for y in range(imatge_final.height):
+                    await enviar(0xA2, convertir_fila(imatge_final, y))
+
+                print(&quot;Avanzando papel extra...&quot;)
+                fila_blanca = bytearray(48)
+                for _ in range(110):
+                    await enviar(0xA2, bytes(fila_blanca))
+
+                await enviar(0xA1, bytes())
+                print(f&quot;\n¡Proceso finalizado con éxito!&quot;)
+        except Exception as e:
+            print(f&quot;\n[ERROR] Fallo en la transmisión: {e}&quot;)
+
+        print(&quot;\nPreparando cámara para el siguiente disparo...&quot;)
+        await asyncio.sleep(3.0)
+
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    print(&quot;\n[Sistema] Cámara detenida de forma manual.&quot;)
+</code></pre>
+</article>
+<article class="file" id="f-polaroid-pi-v2-py">
+  <header><h3><code>polaroid_pi_v2.py</code></h3>
+  <p class="desc">Menys contrast, més brillantor i tramat Floyd–Steinberg.</p>
+  <p class="meta"><a href="index.html#dia-29-10">Diari 29/10</a> · 205 línies · <a href="codi/polaroid_pi_v2.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+import os
+import subprocess
+import time
+from datetime import datetime
+from gpiozero import Button
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter
+import requests
+import sys
+
+# CONFIGURACIÓN BLUETOOTH
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+AE02 = &quot;0000ae02-0000-1000-8000-00805f9b34fb&quot;
+
+# CONFIGURACIÓN TELEGRAM
+TELEGRAM_TOKEN = &quot;POSA_AQUI_EL_TOKEN_DEL_BOT&quot;
+TELEGRAM_CHAT_ID = &quot;POSA_AQUI_EL_TEU_CHAT_ID&quot;
+
+ultima_resposta = None
+
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+def convertir_fila(imatge, y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+def rebre_estat(sender, data):
+    global ultima_resposta
+    ultima_resposta = data
+    print(f&quot;-&gt; Info de la impressora: {data.hex(&#x27; &#x27;)}&quot;)
+
+def enviar_a_telegram(ruta_foto):
+    print(&quot;\n[Telegram] Intentando enviar la foto a tu móvil...&quot;)
+    url = f&quot;https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto&quot;
+    try:
+        with open(ruta_foto, &quot;rb&quot;) as foto:
+            payload = {
+                &quot;chat_id&quot;: TELEGRAM_CHAT_ID,
+                &quot;caption&quot;: f&quot;📸 ¡Nueva foto de tu Raspberry Polaroid!\n📅 {datetime.now().strftime(&#x27;%d/%m/%Y %H:%M:%S&#x27;)}&quot;
+            }
+            response = requests.post(url, data=payload, files={&quot;photo&quot;: foto}, timeout=(5, 20))
+            resultado = response.json()
+            if response.ok and resultado.get(&quot;ok&quot;):
+                print(&quot;[Telegram] ¡Foto enviada correctamente!&quot;)
+            else:
+                print(f&quot;[Telegram] Error: {response.status_code}&quot;)
+    except Exception as e:
+        print(f&quot;[Telegram] Error de conexión: {e}&quot;)
+
+# FUNCIÓN DE APAGADO SEGURO CON AVISO EN TERMINAL
+def apagar_sistema():
+    print(&quot;\n\033[91m==================================================&quot;)
+    print(&quot;⚠️ ¡BOTÓN DE APAGADO DETECTADO! (3 SEGUNDOS)&quot;)
+    print(&quot;Cerrando el sistema de forma segura ahora mismo...&quot;)
+    print(&quot;==================================================\033[0m&quot;)
+    time.sleep(2.0)
+    # Ejecuta el comando oficial de apagado del sistema operativo
+    os.system(&quot;sudo shutdown -h now&quot;)
+    sys.exit()
+
+async def main():
+    global ultima_resposta
+
+    # CONFIGURAR CONFIGURACIÓN DE BOTONES
+    boto_disparador = Button(17, pull_up=True)
+    
+    # Configurar botón de apagado en GPIO 3 con tiempo de mantenimiento de 3 segundos
+    boto_apagado = Button(3, pull_up=True, hold_time=3.0)
+    boto_apagado.when_held = apagar_sistema  # Si se mantiene 3 seg, salta la función
+
+    carpeta_fotos = os.path.expanduser(&quot;~/MisFotosPolaroid&quot;)
+    os.makedirs(carpeta_fotos, exist_ok=True)
+
+    while True:
+        ultima_resposta = None
+        
+        print(&quot;\n==================================================&quot;)
+        print(&quot;📸 CÁMARA INSTANTÁNEA EN ESPERA...&quot;)
+        print(&quot;-&gt; Pulsa el DISPARADOR (GPIO 17) para hacer una foto.&quot;)
+        print(&quot;-&gt; Mantén presionado APAGAR (GPIO 3) 3 seg para cerrar.&quot;)
+        print(&quot;==================================================&quot;)
+
+        # Usamos un bucle de espera corto para que Python pueda atender al botón de apagado en paralelo
+        while not boto_disparador.is_pressed:
+            await asyncio.sleep(0.1)
+            
+        print(&quot;\n¡Disparo detectado! Arrancando sistema...&quot;)
+
+        ahora = datetime.now().strftime(&quot;%Y%m%d_%H%M%S&quot;)
+        nombre_archivo = os.path.join(carpeta_fotos, f&quot;foto_{ahora}.jpg&quot;)
+
+        print(&quot;--------------------------------------------------&quot;)
+        print(&quot;1. VERIFICANDO ESTADO DE LA IMPRESORA...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        try:
+            async with BleakClient(MAC, timeout=8) as client:
+                print(&quot;¡Conectado por Bluetooth!&quot;)
+                await client.start_notify(AE02, rebre_estat)
+                ordre_estat = bytes.fromhex(&quot;51 78 A3 00 01 00 00 00 FF&quot;)
+                await client.write_gatt_char(AE01, ordre_estat, response=False)
+                await asyncio.sleep(1.0)
+                await client.stop_notify(AE02)
+                
+                if ultima_resposta is None:
+                    print(&quot;\n[AVISO] La impresora no respondió. Reintentando...&quot;)
+                    continue
+                print(&quot;¡Impresora lista! Procediendo...&quot;)
+        except Exception as e:
+            print(f&quot;\n[AVISO] Error de impresora: {e}. Reintentando...&quot;)
+            continue
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(f&quot;2. CAPTURANDO IMAGEN DESDE LA PI CAMERA v1.3...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        time.sleep(0.5) 
+        try:
+            subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+            print(&quot;¡Captura completada!&quot;)
+        except Exception as e:
+            print(f&quot;Error al tomar la foto: {e}&quot;)
+            continue
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(&quot;3. PROCESANDO IMAGEN...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        imagen_original = ImageOps.exif_transpose(Image.open(nombre_archivo))
+        imagen_vertical = imagen_original.rotate(90, expand=True)
+
+        ancho_fijo = 384
+        alto_proporcional = int((imagen_vertical.height * ancho_fijo) / imagen_vertical.width)
+        imagen_redimensionada = imagen_vertical.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+        # AJUSTES OPTIMIZADOS PARA IMPRESORA TÉRMICA:
+        # 1. Suavizamos el contraste (antes tenías 1.8, lo bajamos a un rango más natural)
+        imagen_contrastada = ImageEnhance.Contrast(imagen_redimensionada).enhance(1.1)
+        
+        # 2. Subimos el brillo (antes tenías 0.95, lo subimos para aclarar las sombras)
+        imagen_ajustada = ImageEnhance.Brightness(imagen_contrastada).enhance(1.3)
+        
+        # 3. Aplicamos un filtro de nitidez moderado
+        imagen_nitida = imagen_ajustada.filter(ImageFilter.SHARPEN)
+        
+        # 4. CONVERSIÓN CON DITHERING (Floyd-Steinberg): 
+        # Al usar Image.DITHER.FLOYDSTEINBERG, creamos texturas de puntos que evitan los manchones negros
+        imatge_final = imagen_nitida.convert(&quot;1&quot;, dither=Image.DITHER.FLOYDSTEINBERG)
+
+
+        print(&quot;\n--------------------------------------------------&quot;)
+        print(&quot;4. TRANSMITIENDO FOTO Y ENVIANDO A TELEGRAM...&quot;)
+        print(&quot;--------------------------------------------------&quot;)
+        try:
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, enviar_a_telegram, nombre_archivo)
+
+            async with BleakClient(MAC, timeout=10) as client:
+                async def enviar(cmd, dades):
+                    await client.write_gatt_char(AE01, paquet(cmd, dades), response=False)
+                    await asyncio.sleep(0.04)
+
+                await enviar(0xBE, b&quot;\x01&quot;)
+                print(f&quot;Imprimiendo foto vertical ({imatge_final.height} líneas)...&quot;)
+                for y in range(imatge_final.height):
+                    await enviar(0xA2, convertir_fila(imatge_final, y))
+
+                print(&quot;Avanzando papel extra...&quot;)
+                fila_blanca = bytearray(48)
+                for _ in range(110):
+                    await enviar(0xA2, bytes(fila_blanca))
+
+                await enviar(0xA1, bytes())
+                print(f&quot;\n¡Proceso finalizado con éxito!&quot;)
+        except Exception as e:
+            print(f&quot;\n[ERROR] Fallo en la transmisión: {e}&quot;)
+
+        print(&quot;\nPreparando cámara para el siguiente disparo...&quot;)
+        await asyncio.sleep(3.0)
+
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    print(&quot;\n[Sistema] Cámara detenida de forma manual.&quot;)
+</code></pre>
+</article>
+<article class="file" id="f-test-enfoque-py">
+  <header><h3><code>test_enfoque.py</code></h3>
+  <p class="desc">Només envia la foto per Telegram, per ajustar l&#x27;enfocament.</p>
+  <p class="meta"><a href="index.html#dia-29-10">Diari 29/10</a> · 55 línies · <a href="codi/test_enfoque.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import os
+import subprocess
+import time
+from datetime import datetime
+import requests
+
+# CONFIGURACIÓN TELEGRAM
+TELEGRAM_TOKEN = &quot;POSA_AQUI_EL_TOKEN_DEL_BOT&quot;
+TELEGRAM_CHAT_ID = &quot;POSA_AQUI_EL_TEU_CHAT_ID&quot;
+
+def enviar_a_telegram(ruta_foto):
+    print(&quot;\n[Telegram] Enviando captura de prueba para enfoque...&quot;)
+    url = f&quot;https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto&quot;
+    try:
+        with open(ruta_foto, &quot;rb&quot;) as foto:
+            payload = {
+                &quot;chat_id&quot;: TELEGRAM_CHAT_ID,
+                &quot;caption&quot;: f&quot;🔍 PRUEBA DE ENFOQUE\n📅 {datetime.now().strftime(&#x27;%H:%M:%S&#x27;)}\n\n¡Revisa la nitidez de esta imagen!&quot;
+            }
+            response = requests.post(url, data=payload, files={&quot;photo&quot;: foto}, timeout=(5, 20))
+            if response.ok and response.json().get(&quot;ok&quot;):
+                print(&quot;[Telegram] ¡Foto enviada! Revisa tu móvil.&quot;)
+            else:
+                print(f&quot;[Telegram] Error: {response.status_code}&quot;)
+    except Exception as e:
+        print(f&quot;[Telegram] Error de conexión: {e}&quot;)
+
+def main():
+    carpeta_fotos = &quot;/home/pi/MisFotosPolaroid&quot;
+    os.makedirs(carpeta_fotos, exist_ok=True)
+    
+    nombre_archivo = os.path.join(carpeta_fotos, &quot;prueba_enfoque.jpg&quot;)
+    
+    # Si existía una prueba anterior, la borramos para no confundirnos
+    if os.path.exists(nombre_archivo):
+        os.remove(nombre_archivo)
+
+    print(&quot;\n==================================================&quot;)
+    print(&quot;📸 CAPTURANDO IMAGEN DE PRUEBA (Sin impresión)...&quot;)
+    print(&quot;==================================================&quot;)
+    
+    try:
+        # Tomamos la foto a máxima resolución para evaluar bien el detalle del enfoque
+        subprocess.run([&quot;rpicam-still&quot;, &quot;-o&quot;, nombre_archivo, &quot;--immediate&quot;], check=True)
+        print(&quot;¡Captura completada con éxito!&quot;)
+        
+        # Enviamos el archivo original directamente a Telegram
+        enviar_a_telegram(nombre_archivo)
+        
+    except Exception as e:
+        print(f&quot;[Error] No se pudo tomar la foto: {e}&quot;)
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre>
+</article>
+<article class="file" id="f-polaroid-pi-v3-py">
+  <header><h3><code>polaroid_pi_v3.py</code></h3>
+  <p class="desc">Envia la foto per Telegram encara que la impressora no funcioni.</p>
+  <p class="meta"><a href="index.html#dia-30-10">Diari 30/10</a> · 408 línies · <a href="codi/polaroid_pi_v3.py" download>Descarregar</a></p></header>
+  <pre><code class="language-python">import asyncio
+import os
+import subprocess
+import time
+from datetime import datetime
+from gpiozero import Button
+from bleak import BleakClient
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter
+import requests
+import sys
+
+# ==================================================
+# CONFIGURACIÓN BLUETOOTH
+# ==================================================
+
+MAC = &quot;C4:4F:9F:E9:FE:EF&quot;
+AE01 = &quot;0000ae01-0000-1000-8000-00805f9b34fb&quot;
+AE02 = &quot;0000ae02-0000-1000-8000-00805f9b34fb&quot;
+
+# ==================================================
+# CONFIGURACIÓN TELEGRAM
+# ==================================================
+
+# Introduce aquí tu NUEVO token de Telegram
+TELEGRAM_TOKEN = &quot;POSA_AQUI_EL_TOKEN_DEL_BOT&quot;
+TELEGRAM_CHAT_ID = &quot;POSA_AQUI_EL_TEU_CHAT_ID&quot;
+
+ultima_resposta = None
+
+# ==================================================
+# FUNCIONES DE COMUNICACIÓN CON IMPRESORA
+# ==================================================
+
+def crc8(data):
+    crc = 0
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc &amp; 0x80:
+                crc = ((crc &lt;&lt; 1) ^ 0x07) &amp; 0xFF
+            else:
+                crc = (crc &lt;&lt; 1) &amp; 0xFF
+    return crc
+
+def paquet(cmd, dades=b&quot;&quot;):
+    n = len(dades)
+    return (
+        bytes([0x51, 0x78, cmd, 0x00])
+        + n.to_bytes(2, &quot;little&quot;)
+        + dades
+        + bytes([crc8(dades), 0xFF])
+    )
+
+def convertir_fila(imatge, y):
+    dades = bytearray(48)
+    for x in range(384):
+        if imatge.getpixel((x, y)) == 0:
+            dades[x // 8] |= 1 &lt;&lt; (x % 8)
+    return bytes(dades)
+
+def rebre_estat(sender, data):
+    global ultima_resposta
+    ultima_resposta = data
+    print(f&quot;-&gt; Info de la impressora: {data.hex(&#x27; &#x27;)}&quot;)
+
+# ==================================================
+# ENVÍO DE FOTOGRAFÍAS A TELEGRAM
+# ==================================================
+
+def enviar_a_telegram(ruta_foto):
+    print(&quot;\n[Telegram] Enviando la foto a tu móvil...&quot;)
+    url = f&quot;https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto&quot;
+
+    try:
+        with open(ruta_foto, &quot;rb&quot;) as foto:
+            payload = {
+                &quot;chat_id&quot;: TELEGRAM_CHAT_ID,
+                &quot;caption&quot;: (
+                    &quot;📸 ¡Nueva foto de tu Raspberry Polaroid!\n&quot;
+                    f&quot;📅 {datetime.now().strftime(&#x27;%d/%m/%Y %H:%M:%S&#x27;)}&quot;
+                )
+            }
+
+            response = requests.post(
+                url,
+                data=payload,
+                files={&quot;photo&quot;: foto},
+                timeout=(5, 20)
+            )
+
+            resultado = response.json()
+
+            if response.ok and resultado.get(&quot;ok&quot;):
+                print(&quot;[Telegram] ¡Foto enviada correctamente!&quot;)
+            else:
+                print(f&quot;[Telegram] Error API: {response.status_code}&quot;)
+                print(resultado)
+    except Exception as e:
+        print(f&quot;[Telegram] Error de conexión: {e}&quot;)
+
+# ==================================================
+# APAGADO SEGURO
+# ==================================================
+
+def apagar_sistema():
+    print(&quot;\n\033[91m==================================================&quot;)
+    print(&quot;⚠️ ¡BOTÓN DE APAGADO DETECTADO! (3 SEGUNDOS)&quot;)
+    print(&quot;Cerrando el sistema de forma segura ahora mismo...&quot;)
+    print(&quot;==================================================\033[0m&quot;)
+    time.sleep(2.0)
+    os.system(&quot;sudo shutdown -h now&quot;)
+    sys.exit()
+
+# ==================================================
+# PROCESAMIENTO DE IMAGEN
+# ==================================================
+
+def procesar_imagen(nombre_archivo):
+
+    imagen_original = ImageOps.exif_transpose(
+        Image.open(nombre_archivo)
+    )
+
+    imagen_vertical = imagen_original.rotate(90, expand=True)
+
+    ancho_fijo = 384
+
+    alto_proporcional = int(
+        (imagen_vertical.height * ancho_fijo)
+        / imagen_vertical.width
+    )
+
+    imagen_redimensionada = imagen_vertical.resize(
+        (ancho_fijo, alto_proporcional),
+        Image.Resampling.LANCZOS
+    )
+
+    imagen_contrastada = ImageEnhance.Contrast(
+        imagen_redimensionada
+    ).enhance(1.1)
+
+    imagen_ajustada = ImageEnhance.Brightness(
+        imagen_contrastada
+    ).enhance(1.3)
+
+    imagen_nitida = imagen_ajustada.filter(
+        ImageFilter.SHARPEN
+    )
+
+    imatge_final = imagen_nitida.convert(
+        &quot;1&quot;,
+        dither=Image.Dither.FLOYDSTEINBERG
+    )
+
+    return imatge_final
+
+# ==================================================
+# COMPROBAR ESTADO DE LA IMPRESORA
+# ==================================================
+
+async def comprobar_impresora():
+
+    global ultima_resposta
+    ultima_resposta = None
+
+    async with BleakClient(MAC, timeout=10) as client:
+        print(&quot;   Conectado. Consultando estado...&quot;)
+        await client.start_notify(AE02, rebre_estat)
+        ordre_estat = bytes.fromhex(
+            &quot;51 78 A3 00 01 00 00 00 FF&quot;
+        )
+        
+        await client.write_gatt_char(
+            AE01,
+            ordre_estat,
+            response=False
+        )
+
+        await asyncio.sleep(1.0)
+        await client.stop_notify(AE02)
+        respuesta_valida = ultima_resposta is not None
+    # La conexión se cierra al salir del bloque async with.
+    return respuesta_valida
+
+# ==================================================
+# ENVIAR FOTOGRAFÍA A LA IMPRESORA
+# ==================================================
+
+async def imprimir_fotografia(imatge_final):
+    async with BleakClient(MAC, timeout=10) as client:
+        print(&quot;   Nueva conexión Bluetooth establecida.&quot;)
+        async def enviar_comando(cmd, dades=b&quot;&quot;):
+            await client.write_gatt_char(
+                AE01,
+                paquet(cmd, dades),
+                response=False
+            )
+            await asyncio.sleep(0.04)
+
+        # INICIAR IMPRESIÓN
+
+        await enviar_comando(0xBE, b&quot;\x01&quot;)
+        print(
+            f&quot;   Imprimiendo fotografía &quot;
+            f&quot;({imatge_final.height} líneas)...&quot;
+        )
+
+        # ENVIAR TODAS LAS FILAS
+
+        for y in range(imatge_final.height):
+            await enviar_comando(
+                0xA2,
+                convertir_fila(imatge_final, y)
+            )
+
+            if y % 100 == 0:
+                print(f&quot;   Progreso: {y}/{imatge_final.height} líneas&quot;)
+
+        # AVANCE EXTRA DE PAPEL
+
+        print(&quot;   Avanzando papel extra...&quot;)
+        fila_blanca = bytes(48)
+        for _ in range(110):
+            await enviar_comando(0xA2, fila_blanca)
+
+        # FINALIZAR IMPRESIÓN
+
+        await enviar_comando(0xA1, bytes())
+        print(&quot;   ¡Impresión finalizada con éxito!&quot;)
+
+# ==================================================
+# PROGRAMA PRINCIPAL
+# ==================================================
+
+async def main():
+
+    global ultima_resposta
+
+    # CONFIGURAR BOTONES GPIO
+
+    boto_disparador = Button(17, pull_up=True)
+    boto_apagado = Button(
+        3,
+        pull_up=True,
+        hold_time=3.0
+    )
+
+    boto_apagado.when_held = apagar_sistema
+
+    # CARPETA DE FOTOGRAFÍAS
+
+    carpeta_fotos = os.path.expanduser(
+        &quot;~/MisFotosPolaroid&quot;
+    )
+
+    os.makedirs(carpeta_fotos, exist_ok=True)
+
+    # BUCLE PRINCIPAL
+
+    while True:
+        ultima_resposta = None
+        print(&quot;\n==================================================&quot;)
+        print(&quot;📸 CÁMARA INSTANTÁNEA EN ESPERA...&quot;)
+        print(&quot;-&gt; Pulsa el DISPARADOR (GPIO 17) para hacer una foto.&quot;)
+        print(&quot;-&gt; Mantén APAGAR (GPIO 3) durante 3 segundos.&quot;)
+        print(&quot;==================================================&quot;)
+        # ESPERAR DISPARADOR
+
+        while not boto_disparador.is_pressed:
+            await asyncio.sleep(0.1)
+
+        print(&quot;\n¡Disparo detectado! Arrancando captura...&quot;)
+        ahora = datetime.now().strftime(&quot;%Y%m%d_%H%M%S&quot;)
+        nombre_archivo = os.path.join(
+            carpeta_fotos,
+            f&quot;foto_{ahora}.jpg&quot;
+        )
+
+        # --------------------------------------------------
+        # PASO 1: CAPTURAR IMAGEN
+        # --------------------------------------------------
+
+        print(&quot;\n1. CAPTURANDO IMAGEN...&quot;)
+        time.sleep(0.2)
+
+        try:
+            subprocess.run(
+                [
+                    &quot;rpicam-still&quot;,
+                    &quot;-o&quot;,
+                    nombre_archivo,
+                    &quot;--immediate&quot;
+                ],
+                check=True
+            )
+
+            print(&quot;¡Captura completada!&quot;)
+
+        except Exception as e:
+            print(f&quot;[ERROR] Al tomar la foto: {e}&quot;)
+            await asyncio.sleep(1)
+            continue
+
+        # --------------------------------------------------
+        # PASO 2: TELEGRAM Y PROCESAMIENTO
+        # --------------------------------------------------
+
+        print(&quot;\n2. ENVIANDO A TELEGRAM Y PROCESANDO...&quot;)
+        loop = asyncio.get_running_loop()
+        print(&quot;[Sistema] Esperando el envío de Telegram...&quot;)
+
+        await loop.run_in_executor(
+            None,
+            enviar_a_telegram,
+            nombre_archivo
+        )
+
+        print(&quot;[Sistema] Telegram terminado. Preparando impresora...&quot;)
+
+        try:
+            imatge_final = procesar_imagen(nombre_archivo)
+            print(
+                f&quot;Imagen preparada: &quot;
+                f&quot;384 x {imatge_final.height} píxeles&quot;
+            )
+        except Exception as e:
+            print(f&quot;[ERROR] Procesando imagen: {e}&quot;)
+            await asyncio.sleep(1)
+            continue
+
+        # --------------------------------------------------
+        # PASO 3: COMPROBAR Y CONECTAR A IMPRESORA
+        # --------------------------------------------------
+
+        print(&quot;\n3. CONECTANDO CON IMPRESORA NK...&quot;)
+        impresion_realizada = False
+        max_intentos = 3
+
+        for intento in range(1, max_intentos + 1):
+            print(
+                f&quot;\n-&gt; Intento {intento}/{max_intentos}&quot;
+            )
+            try:
+
+                # PRIMERA CONEXIÓN:
+                # CONSULTAR ESTADO Y CERRAR CONEXIÓN
+
+                impresora_lista = await comprobar_impresora()
+                if not impresora_lista:
+
+                    print(
+                        &quot;[AVISO] La impresora no ha respondido.&quot;
+                    )
+
+                    raise Exception(
+                        &quot;No se recibió respuesta de estado&quot;
+                    )
+
+                print(&quot;¡Impresora lista!&quot;)
+                await asyncio.sleep(0.5)
+
+                # SEGUNDA CONEXIÓN:
+                # TRANSMITIR FOTOGRAFÍA
+
+                print(
+                    &quot;Abriendo nueva conexión para imprimir...&quot;
+                )
+                await imprimir_fotografia(imatge_final)
+                impresion_realizada = True
+                break
+            except Exception as e:
+                print(
+                    f&quot;[AVISO] Error en intento &quot;
+                    f&quot;{intento}: {e}&quot;
+                )
+
+            if intento &lt; max_intentos:
+                print(&quot;Esperando 2 segundos para reintentar...&quot;)
+                await asyncio.sleep(2.0)
+
+        # --------------------------------------------------
+        # PASO 4: RESULTADO
+        # --------------------------------------------------
+
+        if impresion_realizada:
+            print(&quot;\n¡FOTOGRAFÍA IMPRESA CORRECTAMENTE! 📸&quot;)
+        else:
+
+            print(&quot;\n[Modo Digital] Impresora inaccesible.&quot;)
+            print(&quot;La fotografía permanece guardada.&quot;)
+            print(&quot;También se ha solicitado su envío a Telegram.&quot;)
+
+        # --------------------------------------------------
+        # PASO 5: PREPARAR SIGUIENTE FOTO
+        # --------------------------------------------------
+
+        print(&quot;\nPreparando cámara para el siguiente disparo...&quot;)
+        await asyncio.sleep(2.0)
+
+# ==================================================
+# INICIAR SISTEMA
+# ==================================================
+
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    print(&quot;\n[Sistema] Cámara detenida manualmente.&quot;)
+</code></pre>
+</article>
+</main>
+<footer class="wrap">Polaroid Pi · Projecte IOT CIFO La Violeta 2026</footer>
+<script>
+(function () {
+  // Alçada real del menú fix, perquè l'índex del diari i els enllaços quedin just a sota
+  var h = document.querySelector('.top');
+  function set() { document.documentElement.style.setProperty('--head-h', h.offsetHeight + 'px'); }
+  set(); window.addEventListener('resize', set);
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>if (window.hljs) document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });</script>
+</body>
+</html>

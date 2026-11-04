@@ -2,7 +2,9 @@
 
 Càmera instantània portàtil feta amb una Raspberry Pi: fa la foto amb un botó, la imprimeix al moment en paper tèrmic (per Bluetooth Low Energy) i l'envia en color al mòbil per Telegram.
 
-**Projecte IOT CIFO La Violeta 2026**
+**Projecte IOT CIFO La Violeta 2026** · Autor: **Pablo Olóndriz**
+
+Web: https://pablolo.github.io/polaroid-pi/
 
 ## Què hi ha en aquest repositori
 

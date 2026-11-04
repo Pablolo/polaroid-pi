@@ -234,6 +234,12 @@ td small { display: block; color: var(--muted); font-size: .85rem; }
 .thanks-logo img { display: block; width: 100%; height: auto; }
 @media (max-width: 640px) { .thanks { grid-template-columns: minmax(0, 1fr); gap: 28px; } .thanks-logo { justify-self: start; width: 160px; } }
 
+.rpi-logo { display: inline-grid; place-items: center; background: #fff; border-radius: 4px; padding: 2px; flex: none; }
+.rpi-logo img { display: block; width: auto; height: 14px; }
+.specs .spec-rpi { display: inline-flex; align-items: center; gap: 7px; padding-left: 6px; }
+.part-rpi .rpi-logo { margin-right: 8px; vertical-align: -3px; box-shadow: 0 0 0 1px var(--rule); }
+.part-rpi .rpi-logo img { height: 18px; }
+
 .callout { border-left: 3px solid var(--raspberry); padding: 4px 0 4px 16px; display: grid; gap: 6px; }
 .callout .label { color: var(--raspberry); }
 
@@ -322,7 +328,7 @@ dialog button {
       <p class="lead">Una càmera portàtil que imprimeix les fotos a l'instant en paper tèrmic i, alhora, les envia en color al mòbil per Telegram.</p>
       <p class="status">En construcció · actualitzat el 04/11/2026</p>
       <ul class="specs" aria-label="Maquinari principal">
-        <li>Raspberry Pi 4</li>
+        <li class="spec-rpi"><span class="rpi-logo" aria-hidden="true"><img src="img/raspberry-pi.webp" width="373" height="384" alt=""></span>Raspberry Pi 4</li>
         <li>Pi Camera v1.3</li>
         <li>Impressora tèrmica BLE</li>
         <li>Python</li>
@@ -414,7 +420,7 @@ dialog button {
         <table>
           <thead><tr><th>Peça</th></tr></thead>
           <tbody>
-            <tr><td><a href="https://www.raspberrypi.com/products/raspberry-pi-4-model-b/" target="_blank" rel="noopener">Raspberry Pi 4 Model B</a> amb targeta SD<small>Ja la teníem</small></td></tr>
+            <tr><td class="part-rpi"><span class="rpi-logo" aria-hidden="true"><img src="img/raspberry-pi.webp" width="373" height="384" alt=""></span><a href="https://www.raspberrypi.com/products/raspberry-pi-4-model-b/" target="_blank" rel="noopener">Raspberry Pi 4 Model B</a> amb targeta SD<small>Ja la teníem</small></td></tr>
             <tr><td><a href="https://www.kubii.com/es/camaras-sensores/3610-modulo-de-camara-de-8-mp-para-raspberry-pi-3272496309692.html" target="_blank" rel="noopener">Mòdul de càmera</a><small>Raspberry Pi Camera v1.3</small></td></tr>
             <tr><td><a href="https://www.amazon.es/dp/B0BW4PS6RY" target="_blank" rel="noopener">Impressora tèrmica NK-FA3300</a><small>Bluetooth Low Energy, paper de 57 mm</small></td></tr>
             <tr><td><a href="https://www.reichelt.com/es/es/shop/producto/powerbank_li-po_20_000_mah_usb-c-320574" target="_blank" rel="noopener">Powerbank Goobay 20.000 mAh</a><small>Ja la teníem. Alimenta la Raspberry i la impressora</small></td></tr>

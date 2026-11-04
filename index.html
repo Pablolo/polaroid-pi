@@ -21,6 +21,7 @@
   --frame-ink: #2a2e38;
   --code-bg: #e5e7e2;
   --shadow: rgba(28, 33, 48, .14);
+  --marker: rgba(255, 214, 51, .7);
   --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
   --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -30,13 +31,13 @@
   :root:not([data-theme="light"]) {
     --paper: #14161a; --ink: #e6e7e3; --muted: #9ba1ab; --rule: #2b2f36;
     --raspberry: #f0587f; --frame: #e3e3dd; --frame-ink: #23262d; --code-bg: #1e2127;
-    --shadow: rgba(0, 0, 0, .5); color-scheme: dark;
+    --shadow: rgba(0, 0, 0, .5); --marker: rgba(240, 190, 40, .38); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --paper: #14161a; --ink: #e6e7e3; --muted: #9ba1ab; --rule: #2b2f36;
   --raspberry: #f0587f; --frame: #e3e3dd; --frame-ink: #23262d; --code-bg: #1e2127;
-  --shadow: rgba(0, 0, 0, .5); color-scheme: dark;
+  --shadow: rgba(0, 0, 0, .5); --marker: rgba(240, 190, 40, .38); color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -239,6 +240,14 @@ td small { display: block; color: var(--muted); font-size: .85rem; }
 .specs .spec-rpi { display: inline-flex; align-items: center; gap: 7px; padding-left: 6px; }
 .part-rpi .rpi-logo { margin-right: 8px; vertical-align: -3px; box-shadow: 0 0 0 1px var(--rule); }
 .part-rpi .rpi-logo img { height: 18px; }
+
+mark {
+  color: inherit; background: none;
+  background-image: linear-gradient(100deg, transparent 0, var(--marker) .2em, var(--marker) calc(100% - .25em), transparent 100%);
+  background-size: 100% .62em; background-position: 0 88%; background-repeat: no-repeat;
+  padding: 0 .12em; margin: 0 -.06em;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
 
 .callout { border-left: 3px solid var(--raspberry); padding: 4px 0 4px 16px; display: grid; gap: 6px; }
 .callout .label { color: var(--raspberry); }
@@ -531,7 +540,7 @@ hciuart.service - Configure Bluetooth Modems connected by UART
 dtparam=bluetooth=on</code></pre>
 <p>Guardem i continua sense funcionar, donant aquest error:</p>
 <pre><code>Can't init device hci0: Operation not possible due to RF-kill (132)</code></pre>
-<p>Significa que el Bluetooth està bloquejat per software a nivell de seguretat del SO, així que fem això:</p>
+<p><mark>Significa que el Bluetooth està bloquejat per software</mark> a nivell de seguretat del SO, així que fem això:</p>
 <pre><code>sudo rfkill unblock bluetooth</code></pre>
 <p>I aixequem de nou:</p>
 <pre><code>sudo hciconfig hci0 up</code></pre>
@@ -581,7 +590,7 @@ Discovery started
 <pre><code>[bluetoothctl]&gt; pair C4:4F:9F:E9:FE:EF
 [bluetoothctl]&gt; trust C4:4F:9F:E9:FE:EF</code></pre>
 <p>Però res funciona... intento desinstal·lar l'app del mòbil perquè la impressora l'oblidi, en cas de que només pugui connectar-se a un dispositiu, però encara res. Llavors caic en que l'app m'ha demanat permisos d'ubicació (a més del bluetooth), la qual cosa em sembla estranya.</p>
-<p>Investigant, aprenc que la impressora NK és un dispositiu purament <b>Bluetooth Low Energy (BLE).</b> Els dispositius BLE no es poden aparellar de la manera tradicional (pair) perquè no usen els perfils estàndard d'àudio o teclat. En canvi, transmeten dades directament a través de "característiques" mitjançant ordres GATT. Per això el Bluetooth clàssic de la Raspberry Pi et diu que no està disponible per a aparellament.</p>
+<p>Investigant, aprenc que <mark>la impressora NK és un dispositiu purament <b>Bluetooth Low Energy (BLE).</b></mark> Els dispositius BLE no es poden aparellar de la manera tradicional (pair) perquè no usen els perfils estàndard d'àudio o teclat. En canvi, transmeten dades directament a través de "característiques" mitjançant ordres GATT. Per això el Bluetooth clàssic de la Raspberry Pi et diu que no està disponible per a aparellament.</p>
 <p>Per verificar, utilitzem l'eina d'escaneig específica per dispositius Low Energy:</p>
 <pre><code><b>pi@raspberrypi:~ $ sudo hcitool lescan</b>
 LE Scan ...
@@ -604,7 +613,7 @@ C4:4F:9F:E9:FE:EF X5
         <div class="photos">
           <figure class="pol wide"><button type="button"><img src="img/mini/10-23-01.webp" data-full="img/10-23-01.webp" width="700" height="394" alt="Mòdul Raspberry Pi Camera amb la cinta" loading="lazy" decoding="async"></button><figcaption>La nova Raspberry Pi Camera</figcaption></figure>
         </div>
-<p>Aquestes mini impressores tèrmiques <b>BLE</b> no accepten text pla directament perquè la informació viatja empaquetada en ordres específiques de gràfics. Per poder comunicar-nos, utilitzarem un script de Python que cerca la característica d'escriptura de la impressora.</p>
+<p>Aquestes mini impressores tèrmiques <b>BLE</b> <mark>no accepten text pla directament</mark> perquè la informació viatja empaquetada en ordres específiques de gràfics. Per poder comunicar-nos, utilitzarem un script de Python que cerca la característica d'escriptura de la impressora.</p>
 <p>Farem un test per imprimir alguna cosa des de la Raspberry. Així que primer instal·lem la llibreria:</p>
 <pre><code>pip install bleak --break-system-packages</code></pre>
 <p>I farem córrer un script de python anomenat <code title="Aquest fitxer no és a la carpeta Codis">test_impresora_v1.py</code> que busca de manera asíncrona els <i>Universally Unique Identifier</i> (UUID) de la impressora, és a dir, les direccions internes dels serveis que permet el dispositiu. I ens dona aquest resultat:</p>
@@ -688,7 +697,7 @@ Mensaje completo (Hex): 5206005178A40001003399FF5178AF0002004C1DF4FF5178BE000100
 <li><code>python3 <a class="code-link-plain" href="codi.html#f-prova-ble-py">prova_ble.py</a></code>: Vam crear i provar un script inicial per escanejar i llistar els serveis i les característiques internes de la impressora (el codi del fitxer <a class="code-link" href="codi.html#f-prova-ble-py"><code>prova_ble.py</code></a>). Amb això vam descobrir que la característica anomenada 0000ae01-... serveix per enviar-li dades.</li>
 <li><code>python <a class="code-link-plain" href="codi.html#f-prova-ble-lectura-test-1-py">prova_ble_lectura_test_1.py</a></code>: Vam dissenyar un script per llegir dades internes de la impressora (el fitxer <a class="code-link" href="codi.html#f-prova-ble-lectura-test-1-py"><code>prova_ble_lectura_test_1.py</code></a>).</li>
 <li><code>bluetoothctl info C4:4F:9F:E9:FE:EF</code>: Consulta l'estat actual de la impressora al sistema (si està aparellada, connectada o és de confiança).</li>
-<li><code>python3 <a class="code-link-plain" href="codi.html#f-prova-estat-impresora-py">prova_estat_impresora.py</a></code>: Quan executem aquest script d'estat (<a class="code-link" href="codi.html#f-prova-estat-impresora-py"><code>prova_estat_impresora.py</code></a>), la impressora torna una cadena de bytes: <code>51 78 a3 01 03 00 00 11 29 9d ff</code>. Si desglossem aquesta resposta segons el protocol, el byte 00 (o els bits interns) indiquen que la impressora reporta un estat correcte (té bateria, té paper i no està sobreescalfada). Això vol dir que la comunicació bidireccional funciona a la perfecció.</li>
+<li><code>python3 <a class="code-link-plain" href="codi.html#f-prova-estat-impresora-py">prova_estat_impresora.py</a></code>: Quan executem aquest script d'estat (<a class="code-link" href="codi.html#f-prova-estat-impresora-py"><code>prova_estat_impresora.py</code></a>), la impressora torna una cadena de bytes: <code>51 78 a3 01 03 00 00 11 29 9d ff</code>. Si desglossem aquesta resposta segons el protocol, el byte 00 (o els bits interns) indiquen que la impressora reporta un estat correcte (té bateria, té paper i no està sobreescalfada). <mark>Això vol dir que la comunicació bidireccional funciona a la perfecció.</mark></li>
 <li><code>sudo apt install python3-pil</code>: Instal·la Pillow (PIL), la llibreria de processament d'imatges de Python. És crucial perquè aquestes impressores no entenen text pla; entenen imatges formades per punts (píxels).</li>
 <li><code>python3 <a class="code-link-plain" href="codi.html#f-hola-print-test-py">hola_print_test.py</a></code>: El gran final. Vam crear l'script (<a class="code-link" href="codi.html#f-hola-print-test-py"><code>hola_print_test.py</code></a>) que va processar el missatge i va disparar mecànicament la impressió de "HOLA RASPBERRY".</li>
 </ol>
@@ -722,7 +731,7 @@ except subprocess.CalledProcessError as e:
 except FileNotFoundError:
     print("Error: No se encontró el comando 'rpicam-still'.")</code></pre>
 <p>Que acaba sortint de forma correcta, donant un .jpg amb resolució 2592 x 1944 píxels.</p>
-<p>I ara sí, connectem la Raspberry Pi Camera amb un nou codi de Python (<a class="code-link" href="codi.html#f-camara-instantanea-py"><code>camara_instantanea.py</code></a>) perquè imprimeixi la foto presa al moment, i per fi els dos estan connectats:</p>
+<p>I ara sí, connectem la Raspberry Pi Camera amb un nou codi de Python (<a class="code-link" href="codi.html#f-camara-instantanea-py"><code>camara_instantanea.py</code></a>) perquè imprimeixi la foto presa al moment, i <mark>per fi els dos estan connectats</mark>:</p>
         <div class="photos">
           <figure class="pol wide"><button type="button"><img src="img/mini/10-26-03.webp" data-full="img/10-26-03.webp" width="700" height="394" alt="Foto feta amb la Pi Camera i impresa" loading="lazy" decoding="async"></button><figcaption>Càmera i impressora connectades</figcaption></figure>
         </div>
@@ -771,7 +780,7 @@ except FileNotFoundError:
         <div class="photos">
           <figure class="pol wide"><button type="button"><img src="img/mini/10-27-06.webp" data-full="img/10-27-06.webp" width="700" height="394" alt="Segon botó connectat a la Raspberry" loading="lazy" decoding="async"></button><figcaption>Botó a GPIO3</figcaption></figure>
         </div>
-<p>El que farem per afegir una capa de seguretat és que el botó d'encesa i apagada s'hagi d'apretar durant uns 3-4 segons per ser efectiu.</p>
+<p>El que farem per afegir una capa de seguretat és que el botó d'encesa i apagada <mark>s'hagi d'apretar durant uns 3-4 segons per ser efectiu</mark>.</p>
 <p>Anem a indicar-li al nucli de la Raspberry que pari atenció al pin GPIO 3 per a les tasques d'energia amb el codi <a class="code-link" href="codi.html#f-camera-boto-apagat-py"><code>camera_boto_apagat.py</code></a></p>
         <div class="photos">
           <figure class="pol wide fit"><button type="button"><img src="img/mini/10-27-07.webp" data-full="img/10-27-07.webp" width="537" height="266" alt="Terminal mostrant que s&#x27;ha detectat el botó d&#x27;apagada" loading="lazy" decoding="async"></button><figcaption>Apagada detectada</figcaption></figure>
@@ -788,7 +797,7 @@ except FileNotFoundError:
         <div class="photos">
           <figure class="pol wide"><button type="button"><img src="img/mini/10-28-01.webp" data-full="img/10-28-01.webp" width="700" height="394" alt="Raspberry alimentada amb la bateria externa" loading="lazy" decoding="async"></button><figcaption>Funcionant amb bateria</figcaption></figure>
         </div>
-<p>Ara llavors ja no depenem d'una font d'energia connectada a la xarxa i el nostre prototip és "portàtil". L'únic que no estic segur és si el cable és massa curt (15 cm) però de moment ens arreglarem amb aquest.</p>
+<p>Ara llavors ja no depenem d'una font d'energia connectada a la xarxa i <mark>el nostre prototip és "portàtil"</mark>. L'únic que no estic segur és si el cable és massa curt (15 cm) però de moment ens arreglarem amb aquest.</p>
 <p>Després hem passat tot el matí soldant els botons als cables i a la placa. Mai havia soldat abans, així que he fet i desfet fins que ha sortit alguna cosa funcional:</p>
         <div class="photos">
           <figure class="pol wide"><button type="button"><img src="img/mini/10-28-02.webp" data-full="img/10-28-02.webp" width="700" height="394" alt="Soldant a la taula de treball" loading="lazy" decoding="async"></button><figcaption>Soldant</figcaption></figure>
@@ -856,7 +865,7 @@ sudo systemctl enable polaroid.service</code></pre>
         <div class="photos">
           <figure class="pol wide"><button type="button"><img src="img/mini/10-29-06.webp" data-full="img/10-29-06.webp" width="700" height="394" alt="Vista frontal del prototip de porexpan" loading="lazy" decoding="async"></button><figcaption>Vista de davant</figcaption></figure>
         </div>
-<p>He fet una prova agafant la càmera i tot funciona correctament, el problema ara és que les fotos surten amb massa contrast i que he de calibrar d'alguna manera l'enfocament.</p>
+<p>He fet una prova agafant la càmera i tot funciona correctament, el problema ara és que <mark>les fotos surten amb massa contrast</mark> i que he de calibrar d'alguna manera l'enfocament.</p>
 <p>Pel problema del contrast, canviem aquesta part del codi:</p>
 <pre><code>print("\n--------------------------------------------------")
 print("3. PROCESANDO IMAGEN...")
@@ -896,7 +905,7 @@ sudo systemctl restart polaroid.service</code></pre>
       <div class="day-date"><b>30/10</b><span>Dia 8</span></div>
       <div class="day-body">
         <h3>Prototip OK i disseny 3D amb Autodesk</h3>
-<p>Avui he acabat de muntar el primer prototip i he canviat una mica el codi (<a class="code-link" href="codi.html#f-polaroid-pi-v3-py"><code>polaroid_pi_v3.py</code></a>) perquè la foto s'enviï per Telegram encara que la impressora no estigui operativa.</p>
+<p>Avui he acabat de muntar el primer prototip i he canviat una mica el codi (<a class="code-link" href="codi.html#f-polaroid-pi-v3-py"><code>polaroid_pi_v3.py</code></a>) <mark>perquè la foto s'enviï per Telegram encara que la impressora no estigui operativa</mark>.</p>
 <p>He d'enrecordar-me cada vegada que faig canvis al codi de fer:</p>
 <pre><code>sudo systemctl daemon-reload
 sudo systemctl restart polaroid.service</code></pre>
@@ -934,7 +943,7 @@ sudo systemctl restart polaroid.service</code></pre>
           <figure class="pol wide"><button type="button"><img src="img/mini/11-02-04.webp" data-full="img/11-02-04.webp" width="700" height="394" alt="Connector de la impressora mal alineat" loading="lazy" decoding="async"></button><figcaption>El connector de la impressora</figcaption></figure>
         </div>
 <p>Així que s'haurà de modificar una mica la caixa perquè hi càpiguen.</p>
-<p>Primer creiem que s'hauria de llimar la caixa d'alguna manera, però després hem descobert que es pot "soldar" la caixa per fondre el material, així que ho hem provat:</p>
+<p>Primer creiem que s'hauria de llimar la caixa d'alguna manera, però després hem descobert que <mark>es pot "soldar" la caixa per fondre el material</mark>, així que ho hem provat:</p>
         <div class="photos">
           <figure class="pol wide"><button type="button"><img src="img/mini/11-02-05.webp" data-full="img/11-02-05.webp" width="700" height="394" alt="Fonent el plàstic de la caixa amb el soldador" loading="lazy" decoding="async"></button><figcaption>&quot;Soldant&quot; la caixa</figcaption></figure>
         </div>
@@ -998,6 +1007,7 @@ sudo systemctl restart polaroid.service</code></pre>
       </div>
     </article>
     <!-- DIARI:FI -->
+
 
 
 

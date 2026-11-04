@@ -5,6 +5,7 @@ Format de diari.txt:
   @fig classes | fitxer | alt | peu de foto
   {{nom.py}}                      -> enllaç a la pàgina de codi (si el fitxer existeix a codi/)
   [[nom.py]]                      -> el mateix, però sense format de codi (per dins de <pre> i <code>)
+  ==text==                        -> subratllat amb retolador (fora dels blocs de codi)
 La resta de línies és HTML tal qual.
 """
 import os, re, html, json
@@ -50,7 +51,10 @@ for line in open(os.path.join(ROOT, 'eines', 'diari.txt'), encoding='utf-8'):
         if '<pre' in line: in_pre = True
         if '</pre>' in line: in_pre = False
         line = re.sub(r'\{\{([\w.\-]+\.py)\}\}', code_link, line)
-        out.append(re.sub(r'\[\[([\w.\-]+\.py)\]\]', plain_link, line))
+        line = re.sub(r'\[\[([\w.\-]+\.py)\]\]', plain_link, line)
+        if not in_pre and '<pre' not in line:
+            line = re.sub(r'==(.+?)==', r'<mark>\1</mark>', line)
+        out.append(line)
 if open_day: out.append('      </div>\n    </article>')
 diari = '\n'.join(out)
 

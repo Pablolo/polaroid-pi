@@ -463,3 +463,19 @@ sudo systemctl restart polaroid.service</code></pre>
 @photos
 @fig wide fit | 11-04-04 | Model 3D d'un botó | Els botons
 @end
+<p>Després comencem a crear una web del projecte amb Claude Code:</p>
+@photos
+@fig wide fit | 11-04-05 | Captura de Claude Code creant la web del projecte | Fent la web amb Claude Code
+@end
+
+@day 05/11 | Dia 12 | Retocs a la carcassa i web del projecte | Llima i web
+<p>Avui he portat una llima de casa per deixar els forats que vam fondre a la carcassa una mica més decents:</p>
+@photos
+@fig wide | 11-05-01 | Llimant els forats de la carcassa verda | Llimant els forats
+@end
+<p>I després he acabat el disseny de la web del projecte. Encara que queden uns petits detalls, ja està molt decent:</p>
+@photos
+@fig wide fit | 11-05-02 | Portada de la web Polaroid Pi | La web del projecte
+@end
+<p>Per després pujar el codi a un repo de GitHub i publicar-la a <b>GitHub Pages</b> en aquesta adreça: <a href="https://pablolo.github.io/polaroid-pi/" target="_blank" rel="noopener">https://pablolo.github.io/polaroid-pi/</a></p>
+<p>Mentre esperem que arribin les noves peces 3D que vam enviar a imprimir ahir.</p>

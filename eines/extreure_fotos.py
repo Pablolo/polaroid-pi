@@ -13,7 +13,8 @@ os.makedirs(MINI, exist_ok=True)
 ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
       'a': 'http://schemas.openxmlformats.org/drawingml/2006/main',
       'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'}
-mides = {}
+_mj = os.path.join(ROOT, 'eines', 'mides_fotos.json')
+mides = json.load(open(_mj)) if os.path.exists(_mj) else {}   # es conserven les fotos d'altres dies
 for fn in sorted(f for f in os.listdir(SRC) if f.endswith('.docx')):
     day = fn[:-5]; z = zipfile.ZipFile(os.path.join(SRC, fn))
     rmap = {r.get('Id'): r.get('Target') for r in ET.fromstring(z.read('word/_rels/document.xml.rels'))}
@@ -32,5 +33,5 @@ for fn in sorted(f for f in os.listdir(SRC) if f.endswith('.docx')):
         mini = im.copy(); mini.thumbnail((700, 700), Image.Resampling.LANCZOS)
         mini.save(os.path.join(MINI, name + '.webp'), 'WEBP', quality=80, method=6)
         mides[name] = list(mini.size)
-json.dump(mides, open(os.path.join(ROOT, 'eines', 'mides_fotos.json'), 'w'), indent=0)
-print(len(mides), 'fotos')
+json.dump(dict(sorted(mides.items())), open(_mj, 'w'), indent=0)
+print(len(mides), 'fotos en total')

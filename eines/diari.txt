@@ -494,3 +494,18 @@ sudo systemctl restart polaroid.service</code></pre>
 @fig wide | 11-09-03 | La carcassa verda muntada amb la tapa, el visor i la caixeta dels botons | Tot muntat
 @end
 <p>(Encara sense connectar)</p>
+
+@day 10/11 | Dia 14 | Finalització del projecte | Final del projecte
+@final
+<p>Avui era l'últim dia i ja he pogut enganxar les peces i connectar-ho tot. Ha quedat així:</p>
+@photos final-grid
+@fig final | 11-10-01 | La Polaroid Pi acabada, amb la carcassa verda i lila | La Polaroid Pi acabada
+@fig final | 11-10-02 | Vista de davant amb els botons verd i vermell | Els botons, al seu lloc
+@fig final | 11-10-03 | Vista de darrere amb els cables connectats | Per darrere, tot connectat
+@fig final | 11-10-04 | La càmera acabada vista de costat | Llesta per fer fotos
+@end
+<p>I a l'hora de presentar el projecte, hem pogut fer una foto de grup a classe:</p>
+@photos final-grid
+@fig final | 11-10-05 | Foto de grup de la classe | Foto de grup a classe
+@fig final | 11-10-06 | La foto de grup impresa en paper tèrmic per la Polaroid Pi | …i impresa per la Polaroid Pi
+@end

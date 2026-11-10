@@ -1,7 +1,8 @@
 """Genera el diari d'index.html a partir d'eines/diari.txt.
 Format de diari.txt:
   @day DD/MM | Dia N | Títol | Títol curt   -> nou dia (el títol curt surt a l'índex de dies)
-  @photos ... @end                -> grup de fotos
+  @photos [classe] ... @end       -> grup de fotos
+  @final                          -> (just després d'un @day) marca el darrer dia del projecte
   @fig classes | fitxer | alt | peu de foto
   {{nom.py}}                      -> enllaç a la pàgina de codi (si el fitxer existeix a codi/)
   [[nom.py]]                      -> el mateix, però sense format de codi (per dins de <pre> i <code>)
@@ -39,7 +40,15 @@ for line in open(os.path.join(ROOT, 'eines', 'diari.txt'), encoding='utf-8'):
         nav.append(f'        <li><a href="#dia-{d}-{mth}"><b>{date}</b><span>{html.escape(curt)}</span></a></li>')
         out.append(f'    <article class="day" id="dia-{d}-{mth}">\n      <div class="day-date"><b>{date}</b><span>{num}</span></div>\n      <div class="day-body">\n        <h3>{html.escape(title)}</h3>')
         open_day = True
-    elif line == '@photos': out.append('        <div class="photos">')
+    elif line.startswith('@photos'):
+        extra = line[len('@photos'):].strip()
+        out.append(f'        <div class="photos{(" " + extra) if extra else ""}">')
+    elif line == '@final':
+        # darrer dia del projecte: marc especial i capçalera de cloenda
+        i = max(k for k, o in enumerate(out) if '<article class="day"' in o)
+        out[i] = out[i].replace('<article class="day"', '<article class="day day-final"', 1)
+        out.append('        <div class="final-banner"><span class="stripe" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><p><b>Projecte acabat</b> Després de ' + str(len(nav)) + ' dies de proves, soldadures i peces impreses, la Polaroid Pi fa fotos, les imprimeix i les envia al mòbil.</p></div>')
+        nav[-1] = nav[-1].replace('<li>', '<li class="nav-final">', 1)
     elif line == '@end': out.append('        </div>')
     elif line.startswith('@fig'):
         cls, f, alt, cap = [s.strip() for s in line[4:].split('|')]

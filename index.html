@@ -253,6 +253,35 @@ mark {
   -webkit-box-decoration-break: clone; box-decoration-break: clone;
 }
 
+.status.done::before { background: #3fa35b; box-shadow: 0 0 0 3px color-mix(in srgb, #3fa35b 30%, transparent); }
+
+/* Darrer dia: polaroids de record amb cinta adhesiva i la banda de colors al marc */
+.final-banner { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border: 1.5px solid var(--ink); border-bottom-width: 4px; border-radius: 8px; max-width: none !important; }
+.final-banner .stripe { height: 34px; }
+.final-banner .stripe i { width: 7px; }
+.final-banner p { margin: 0; }
+.final-banner b { font: 800 1.15rem/1.2 var(--display); display: block; color: var(--raspberry); }
+.photos.final-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 34px 26px; padding-top: 14px; }
+.pol.final { width: 100%; padding: 14px 14px 0; position: relative; transform: rotate(-1.4deg); box-shadow: 0 10px 26px var(--shadow); }
+.pol.final:nth-child(even) { transform: rotate(1.6deg); }
+.pol.final:nth-child(3) { transform: rotate(.8deg); }
+.pol.final:hover { transform: rotate(0) scale(1.02); }
+.pol.final img { aspect-ratio: 4 / 3; }
+.pol.final figcaption { font-size: 1.35rem; padding: 14px 4px 20px; min-height: 0; }
+.pol.final::after {
+  content: ""; position: absolute; left: 14px; right: 14px; bottom: 10px; height: 4px; border-radius: 2px;
+  background: linear-gradient(90deg, #d6453d 0 20%, #ee8a2f 20% 40%, #f1c232 40% 60%, #4f9f68 60% 80%, #2f78c0 80% 100%);
+}
+.pol.final::before {
+  content: ""; position: absolute; top: -12px; left: 50%; width: 96px; height: 26px; margin-left: -48px; z-index: 2;
+  background: repeating-linear-gradient(90deg, rgba(226, 206, 160, .88) 0 3px, rgba(236, 220, 182, .88) 3px 7px);
+  border-left: 2px dotted rgba(255, 255, 255, .5); border-right: 2px dotted rgba(255, 255, 255, .5); box-shadow: 0 1px 3px rgba(0, 0, 0, .12); transform: rotate(-3deg);
+}
+.pol.final:nth-child(even)::before { transform: rotate(4deg); margin-left: -38px; }
+.day-nav li.nav-final a b::after { content: " ★"; color: #e0a100; }
+@media (prefers-reduced-motion: reduce) { .pol.final, .pol.final:nth-child(even), .pol.final:nth-child(3), .pol.final:hover { transform: none; } }
+@media (max-width: 520px) { .photos.final-grid { grid-template-columns: minmax(0, 1fr); } .final-banner { align-items: flex-start; } }
+
 .callout { border-left: 3px solid var(--raspberry); padding: 4px 0 4px 16px; display: grid; gap: 6px; }
 .callout .label { color: var(--raspberry); }
 
@@ -339,7 +368,7 @@ dialog button {
       <p class="label">Projecte IOT CIFO La Violeta 2026</p>
       <h1>Polaroid <span>Pi</span></h1>
       <p class="lead">Una càmera portàtil que imprimeix les fotos a l'instant en paper tèrmic i, alhora, les envia en color al mòbil per Telegram.</p>
-      <p class="status">En construcció · actualitzat el 09/11/2026</p>
+      <p class="status done">Projecte acabat · 10/11/2026</p>
       <ul class="specs" aria-label="Maquinari principal">
         <li class="spec-rpi"><span class="rpi-logo" aria-hidden="true"><img src="img/raspberry-pi.webp" width="373" height="384" alt=""></span>Raspberry Pi 4</li>
         <li>Pi Camera v1.3</li>
@@ -485,6 +514,7 @@ dialog button {
         <li><a href="#dia-04-11"><b>04/11</b><span>Peces 3D</span></a></li>
         <li><a href="#dia-05-11"><b>05/11</b><span>Llima i web</span></a></li>
         <li><a href="#dia-09-11"><b>09/11</b><span>Peces restants</span></a></li>
+        <li class="nav-final"><a href="#dia-10-11"><b>10/11</b><span>Final del projecte</span></a></li>
       </ol>
 <!-- NAV:FI -->
     </nav>
@@ -1051,7 +1081,28 @@ sudo systemctl restart polaroid.service</code></pre>
 <p>(Encara sense connectar)</p>
       </div>
     </article>
+
+    <article class="day day-final" id="dia-10-11">
+      <div class="day-date"><b>10/11</b><span>Dia 14</span></div>
+      <div class="day-body">
+        <h3>Finalització del projecte</h3>
+        <div class="final-banner"><span class="stripe" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><p><b>Projecte acabat</b> Després de 14 dies de proves, soldadures i peces impreses, la Polaroid Pi fa fotos, les imprimeix i les envia al mòbil.</p></div>
+<p>Avui era l'últim dia i ja he pogut enganxar les peces i connectar-ho tot. Ha quedat així:</p>
+        <div class="photos final-grid">
+          <figure class="pol final"><button type="button"><img src="img/mini/11-10-01.webp" data-full="img/11-10-01.webp" width="700" height="394" alt="La Polaroid Pi acabada, amb la carcassa verda i lila" loading="lazy" decoding="async"></button><figcaption>La Polaroid Pi acabada</figcaption></figure>
+          <figure class="pol final"><button type="button"><img src="img/mini/11-10-02.webp" data-full="img/11-10-02.webp" width="700" height="394" alt="Vista de davant amb els botons verd i vermell" loading="lazy" decoding="async"></button><figcaption>Els botons, al seu lloc</figcaption></figure>
+          <figure class="pol final"><button type="button"><img src="img/mini/11-10-03.webp" data-full="img/11-10-03.webp" width="700" height="394" alt="Vista de darrere amb els cables connectats" loading="lazy" decoding="async"></button><figcaption>Per darrere, tot connectat</figcaption></figure>
+          <figure class="pol final"><button type="button"><img src="img/mini/11-10-04.webp" data-full="img/11-10-04.webp" width="700" height="394" alt="La càmera acabada vista de costat" loading="lazy" decoding="async"></button><figcaption>Llesta per fer fotos</figcaption></figure>
+        </div>
+<p>I a l'hora de presentar el projecte, hem pogut fer una foto de grup a classe:</p>
+        <div class="photos final-grid">
+          <figure class="pol final"><button type="button"><img src="img/mini/11-10-05.webp" data-full="img/11-10-05.webp" width="700" height="525" alt="Foto de grup de la classe" loading="lazy" decoding="async"></button><figcaption>Foto de grup a classe</figcaption></figure>
+          <figure class="pol final"><button type="button"><img src="img/mini/11-10-06.webp" data-full="img/11-10-06.webp" width="700" height="394" alt="La foto de grup impresa en paper tèrmic per la Polaroid Pi" loading="lazy" decoding="async"></button><figcaption>…i impresa per la Polaroid Pi</figcaption></figure>
+        </div>
+      </div>
+    </article>
     <!-- DIARI:FI -->
+
 
 
 

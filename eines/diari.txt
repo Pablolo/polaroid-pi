@@ -479,3 +479,18 @@ sudo systemctl restart polaroid.service</code></pre>
 @end
 <p>Per després pujar el codi a un repo de GitHub i publicar-la a <b>GitHub Pages</b> en aquesta adreça: <a href="https://pablolo.github.io/polaroid-pi/" target="_blank" rel="noopener">https://pablolo.github.io/polaroid-pi/</a></p>
 <p>Mentre esperem que arribin les noves peces 3D que vam enviar a imprimir ahir.</p>
+
+@day 09/11 | Dia 13 | Impressió de peces restants | Peces restants
+<p>Avui arriben les peces faltants de la impressió 3D: la tapa de la caixa, el visor de la càmera i la caixeta on posar els botons:</p>
+@photos
+@fig wide | 11-09-01 | Les peces noves impreses en 3D al costat de la caixa verda | Les peces que faltaven
+@end
+<p>He calculat malament una mida, així que ho arreglem de forma "manual" (amb el soldador) en comptes d'imprimir una altra vegada la peça:</p>
+@photos
+@fig wide | 11-09-02 | Peça del visor retocada amb el soldador | Arreglada amb el soldador
+@end
+<p>I tot junt queda prou bé:</p>
+@photos
+@fig wide | 11-09-03 | La carcassa verda muntada amb la tapa, el visor i la caixeta dels botons | Tot muntat
+@end
+<p>(Encara sense connectar)</p>
